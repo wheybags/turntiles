@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Orientile</title>
+
+    <style>
+        body, html {
+            padding: 0;
+            margin: 0;
+        }
+
+        #game_canvas {
+            background-color: rgb(230, 230, 230);
+            width: 100vw;
+            height: 100vh;
+            padding: 0;
+            margin: 0;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="game_canvas" width="800" height="800"></canvas>
+
+<script>
+
+    function parseGameString(gameString)
+    {
+        const board = [];
+        const tiles = [];
+
+        let i = 0;
+        let acc = "";
+
+        let boardTilesW = null;
+        for (; i < gameString.length; i++)
+        {
+            if (gameString[i] === 'x')
+            {
+                boardTilesW = parseInt(acc);
+                acc = "";
+                break;
+            }
+            else
+            {
+                console.assert(gameString[i].match(/[0-9]/i));
+                acc += gameString[i];
+            }
+        }
+
+        console.assert(gameString[i] === 'x');
+        i++;
+
+        let boardTilesH = null;
+        for (; i < gameString.length; i++)
+        {
+            if (!gameString[i].match(/[0-9]/i))
+            {
+                boardTilesH = parseInt(acc);
+                acc = "";
+                break;
+            }
+            else
+            {
+                acc += gameString[i];
+            }
+        }
+
+        for (let y = 0; y < boardTilesH; y++)
+        {
+            const row = [];
+            board.push(row);
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                row.push({
+                    direction: gameString[i],
+                })
+                i++;
+            }
+        }
+
+        for (; i < gameString.length; i+= 2)
+        {
+            tiles.push({
+                x: 0,
+                y: 0,
+                letter: gameString[i],
+                direction: gameString[i+1],
+            })
+        }
+
+        return [board, tiles]
+    }
+
+    function randomScatterTiles(tileSpawnTop, tileSpawnBottom, tileSpawnLeft, tileSpawnRight)
+    {
+        // inital random spawn locations
+        for (const tile of tiles)
+        {
+            tile.x = tileSpawnLeft + (tileSpawnRight-tileSpawnLeft)/2;//randomIntFromInterval(tileSpawnLeft, tileSpawnRight);
+            tile.y = tileSpawnTop + (tileSpawnBottom-tileSpawnTop)/2;//randomIntFromInterval(tileSpawnTop, tileSpawnBottom);
+        }
+
+        // a few iterations of reverse flocking to push tiles apart
+        for (let i = 0; i < 300; i++)
+        {
+            for (const tile of tiles)
+            {
+                let dir = [Math.random()*2-1,Math.random()*2-1];
+
+                for (const other of tiles)
+                {
+                    if (other === tile)
+                        continue;
+
+                    const v = [tile.x - other.x, tile.y - other.y];
+
+                    if (Math.abs(v[0]) > 0.000001 || Math.abs(v[1]) > 0.000001)
+                    {
+                        let mag = Math.sqrt(v[0] * v[0] + v[1] * v[1]);
+                        v[0] = v[0]/mag; v[1] = v[1]/mag; // v = normalize(v);
+
+                        let alpha = smoothstep(0, TILE_SIZE*2, mag);
+                        alpha = 1.0 - alpha;
+
+                        dir[0] += v[0] * alpha;
+                        dir[1] += v[1] * alpha;
+                    }
+                }
+
+                tile.x += dir[0];
+                tile.y += dir[1];
+
+                if (tile.x < tileSpawnLeft)
+                    tile.x = tileSpawnLeft;
+                if (tile.x > tileSpawnRight)
+                    tile.x = tileSpawnRight;
+                if (tile.y < tileSpawnTop)
+                    tile.y = tileSpawnTop;
+                if (tile.y > tileSpawnBottom)
+                    tile.y = tileSpawnBottom;
+            }
+        }
+    }
+
+    function randomIntFromInterval(min, max) { // min and max included
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
+
+    function smoothstep(edge0, edge1, x) {
+        const t = Math.min(Math.max((x - edge0) / (edge1 - edge0), 0), 1);
+        return t * t * (3 - 2 * t);
+    }
+
+    const gameString = "4x4 <<<< v^x^ >^>v >>^v nv o^ p^ r^ h> g< sv u> e< k^ s< i> a< n> dv".replace(/ /g,'');
+
+
+    const gameCanvas = document.getElementById("game_canvas");
+    gameCanvas.width = window.innerWidth * window.devicePixelRatio;
+    gameCanvas.height = window.innerHeight * window.devicePixelRatio;
+    const ctx = gameCanvas.getContext("2d");
+
+
+
+    const scale = window.devicePixelRatio;
+
+    let TILE_SIZE;
+    let TILE_RADIUS;
+    let TILE_BORDER;
+    let ARROW_WIDE;
+    let ARROW_LONG;
+    let TILE_TEXT_SIZE;
+    let BOARD_PAD;
+    let TILE_SPAWN_PAD;
+
+    function rescale()
+    {
+        TILE_SIZE = 50 * scale;
+        TILE_RADIUS = 8 * scale;
+        TILE_BORDER = 5 * scale;
+        ARROW_WIDE = 10 * scale;
+        ARROW_LONG = 10 * scale;
+        TILE_TEXT_SIZE = 30 * scale;
+        BOARD_PAD = 15 * scale;
+        TILE_SPAWN_PAD = TILE_SIZE/2 + BOARD_PAD;
+    }
+
+    rescale();
+
+    const BOARD_COLOR = "#aaaaa3";
+    const BOARD_SLOT_COLOR = "#efefe6";
+    const TILE_COLOR = "#5a594e";
+    const TILE_BORDER_COLOR = "black";//"#3d3d35";
+
+
+    const [board, tiles] = parseGameString(gameString);
+    const boardTilesW = board[0].length;
+    const boardTilesH = board.length;
+
+
+    const boardW = boardTilesW*TILE_SIZE + (boardTilesW+1)*BOARD_PAD;
+    const boardH = boardTilesH*TILE_SIZE + (boardTilesH+1)*BOARD_PAD;
+
+    const boardX = Math.round(gameCanvas.width/2 - boardW/2);
+    const boardY = 50;
+
+
+    // const text = ctx.measureText("M");
+    // console.log(text);
+
+    {
+        let tileSpawnTop = boardY + boardH + TILE_SPAWN_PAD;
+        let tileSpawnBottom = Math.min(tileSpawnTop + boardH, gameCanvas.height - TILE_SPAWN_PAD);
+
+        if (tileSpawnBottom < gameCanvas.height - TILE_SPAWN_PAD)
+        {
+            tileSpawnTop += TILE_SPAWN_PAD;
+            tileSpawnBottom += TILE_SPAWN_PAD;
+        }
+        const tileSpawnLeft = Math.max(TILE_SPAWN_PAD, boardX - TILE_SIZE * 2);
+        const tileSpawnRight = Math.min(gameCanvas.width - TILE_SPAWN_PAD, boardX + boardW + TILE_SIZE * 2);
+
+        randomScatterTiles(tileSpawnTop, tileSpawnBottom, tileSpawnLeft, tileSpawnRight);
+    }
+
+
+
+    let selectedTile = null;
+    let selectOffsetX = null;
+    let selectOffsetY = null;
+
+    function renderTiles()
+    {
+        for (const tile of tiles)
+        {
+            ctx.beginPath();
+            ctx.roundRect(tile.x-TILE_SIZE/2, tile.y-TILE_SIZE/2, TILE_SIZE, TILE_SIZE, [TILE_RADIUS]);
+            ctx.fillStyle = TILE_COLOR;
+            ctx.fill();
+            ctx.strokeStyle = TILE_BORDER_COLOR
+            ctx.lineWidth = TILE_BORDER;
+            ctx.stroke();
+
+            const rotateDegrees = {">": 0, "v": 90, "<": 180, "^": 270}[tile.direction]
+
+            ctx.translate(tile.x, tile.y);
+            ctx.rotate(rotateDegrees * Math.PI / 180);
+            ctx.beginPath();
+                ctx.moveTo(TILE_SIZE/2, -ARROW_WIDE);
+                ctx.lineTo(TILE_SIZE/2, +ARROW_WIDE);
+                ctx.lineTo(TILE_SIZE/2+ARROW_LONG, 0);
+                ctx.fillStyle = TILE_BORDER_COLOR;
+            ctx.fill();
+            ctx.beginPath();
+                ctx.moveTo(TILE_SIZE/2-ARROW_LONG*0.65, -ARROW_WIDE);
+                ctx.lineTo(TILE_SIZE/2-ARROW_LONG*0.65, +ARROW_WIDE);
+                ctx.lineTo(TILE_SIZE/2-ARROW_LONG*0.65+ARROW_LONG, 0);
+                ctx.fillStyle = TILE_COLOR;
+            ctx.fill();
+            ctx.resetTransform();
+
+            ctx.font = TILE_TEXT_SIZE + "px serif";
+            ctx.fillStyle = "white";
+            const text = ctx.measureText(tile.letter.toUpperCase());
+
+            const xOff = text.actualBoundingBoxLeft - (text.actualBoundingBoxLeft + text.actualBoundingBoxRight) / 2;
+            const yOff = text.actualBoundingBoxAscent - (text.actualBoundingBoxAscent + text.actualBoundingBoxDescent) / 2;
+            ctx.fillText(tile.letter.toUpperCase(), tile.x + xOff, tile.y + yOff);
+        }
+    }
+
+    function renderBoard()
+    {
+        ctx.beginPath();
+        ctx.roundRect(boardX, boardY,
+                      boardW, boardH,
+                      [TILE_RADIUS]);
+
+        ctx.fillStyle = BOARD_COLOR;
+        ctx.fill();
+
+        for (let y = 0; y < boardTilesH; y++)
+        {
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                const direction = board[y][x].direction;
+
+                if (direction === "x")
+                    continue;
+
+                const slotX = boardX + BOARD_PAD + x*(TILE_SIZE+BOARD_PAD) + TILE_SIZE/2;
+                const slotY = boardY + BOARD_PAD + y*(TILE_SIZE+BOARD_PAD) + TILE_SIZE/2;
+
+                ctx.beginPath();
+                ctx.roundRect(slotX-TILE_SIZE/2, slotY-TILE_SIZE/2, TILE_SIZE, TILE_SIZE, [TILE_RADIUS]);
+                ctx.fillStyle = BOARD_SLOT_COLOR;
+                ctx.fill();
+
+
+                ctx.translate(slotX, slotY);
+                const rotateDegrees = {">": 0, "v": 90, "<": 180, "^": 270}[direction]
+                ctx.rotate(rotateDegrees * Math.PI / 180);
+                ctx.beginPath();
+                ctx.moveTo(TILE_SIZE/2-1, -ARROW_WIDE);
+                ctx.lineTo(TILE_SIZE/2-1, +ARROW_WIDE);
+                ctx.lineTo(TILE_SIZE/2+ARROW_LONG-1, 0);
+                ctx.fillStyle = BOARD_SLOT_COLOR;
+                ctx.fill();
+                ctx.resetTransform();
+            }
+        }
+    }
+
+    function render()
+    {
+        ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+
+        renderBoard();
+        renderTiles();
+
+        requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    gameCanvas.addEventListener('mousemove', (e) =>
+    {
+        if (!selectedTile)
+            return;
+        selectedTile.x = e.offsetX * window.devicePixelRatio + selectOffsetX;
+        selectedTile.y = e.offsetY * window.devicePixelRatio + selectOffsetY;
+    });
+
+    gameCanvas.addEventListener('mousedown', (e) =>
+    {
+        const mx = e.offsetX * window.devicePixelRatio;
+        const my = e.offsetY * window.devicePixelRatio;
+
+        selectedTile = null;
+        for (let i = tiles.length-1; i >= 0; i--)
+        {
+            const tile = tiles[i];
+
+
+
+            const l = tile.x-TILE_SIZE/2;
+            const r = tile.x+TILE_SIZE/2;
+            const t = tile.y-TILE_SIZE/2;
+            const b = tile.y+TILE_SIZE/2;
+
+            if (mx >= l && mx <= r && my >= t && my <= b)
+            {
+                selectedTile = tile;
+                tiles.splice(i, 1);
+                tiles.push(selectedTile);
+                selectOffsetX = selectedTile.x - mx;
+                selectOffsetY = selectedTile.y - my
+                return
+            }
+        }
+    });
+
+    gameCanvas.addEventListener('mouseup', (e) =>
+    {
+        selectedTile = null;
+    });
+
+</script>
+</body>
+</html>
