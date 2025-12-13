@@ -97,15 +97,14 @@
 
     function randomScatterTiles(tileSpawnTop, tileSpawnBottom, tileSpawnLeft, tileSpawnRight)
     {
-        // inital random spawn locations
         for (const tile of tiles)
         {
-            tile.x = tileSpawnLeft + (tileSpawnRight-tileSpawnLeft)/2;//randomIntFromInterval(tileSpawnLeft, tileSpawnRight);
-            tile.y = tileSpawnTop + (tileSpawnBottom-tileSpawnTop)/2;//randomIntFromInterval(tileSpawnTop, tileSpawnBottom);
+            tile.x = tileSpawnLeft + (tileSpawnRight-tileSpawnLeft)/2 + Math.random();
+            tile.y = tileSpawnTop + (tileSpawnBottom-tileSpawnTop)/2 + Math.random();
         }
 
         // a few iterations of reverse flocking to push tiles apart
-        for (let i = 0; i < 300; i++)
+        for (let i = 0; i < 500; i++)
         {
             for (const tile of tiles)
             {

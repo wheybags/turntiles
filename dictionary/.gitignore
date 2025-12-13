@@ -1,0 +1,5 @@
+books/
+gutenberg_books.json
+gutenberg_books_bak.json
+.venv/
+.idea/

@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static System.Net.Mime.MediaTypeNames;
+using System.Text;
 
 public static class Program
 {
@@ -53,6 +53,7 @@ public static class Program
         }
 
         printBoardLayout(board);
+        Console.WriteLine(serialiseGame(board));
         Console.Write("Press enter to reveal solution...");
         Console.ReadLine();
 
@@ -302,63 +303,16 @@ public static class Program
         }
     }
 
-    private static void loadBook(string path, Dictionary<string, int> wordHistogram)
-    {
-        string book = File.ReadAllText(path);
-        string[] bookWords = book.Split();
-
-        foreach (string word_ in bookWords)
-        {
-            string word = "";
-            foreach (char c_ in word_)
-            {
-                int c = c_;
-                if (c >= 'A' && c <= 'Z')
-                    c += 'a' - 'A';
-                if (c < 'a' || c > 'z')
-                {
-                    word = "";
-                    break;
-                }
-                word += (char)c;
-            }
-
-            if (word.Length > 0)
-            {
-                int count = wordHistogram.GetValueOrDefault(word, 0);
-                count++;
-                wordHistogram[word] = count;
-            }
-        }
-    }
-
     public static Dictionary<int, List<string>> getWords()
     {
-        Dictionary<string, int> wordHistogram = new Dictionary<string, int>();
-
         string path = Directory.GetCurrentDirectory();
-        while (!Directory.Exists(path + "/project_gutenberg_books"))
+        while (!Directory.Exists(path + "/dictionary"))
             path = Directory.GetParent(path).FullName;
 
-        foreach (string file in Directory.GetFiles(path + "/project_gutenberg_books"))
-            loadBook(file, wordHistogram);
-
-        //List<KeyValuePair<string, int>> aliceWordFreqs = wordHistogram.ToList();
-        //aliceWordFreqs.Sort((KeyValuePair<string, int> a, KeyValuePair<string, int> b) =>
-        //{
-        //    return b.Value.CompareTo(a.Value);
-        //});
-
-
-        string[] dictLines = File.ReadAllLines("words_alpha.txt");
+        string[] dictLines = File.ReadAllLines(path + "/dictionary/dictionary_for_generation.txt");
         Dictionary<int, List<string>> words = new Dictionary<int, List<string>>();
         foreach (string line in dictLines)
         {
-            int freq = wordHistogram.GetValueOrDefault(line, 0);
-            if (freq < 20)
-                continue;
-
-
             if (!words.TryGetValue(line.Length, out List<string> wordsLenList))
             {
                 wordsLenList = new List<string>();
@@ -479,5 +433,42 @@ public static class Program
                     break;
                 }
         }
+    }
+
+    static string serialiseGame(string[,] board)
+    {
+        StringBuilder sb = new StringBuilder();
+
+        sb.Append(board.GetLength(1));
+        sb.Append('x');
+        sb.Append(board.GetLength(0));
+        sb.Append(' ');
+
+        List<string> tiles = new List<string>();
+
+        for (int y = 0; y < board.GetLength(0); y++)
+        {
+            for (int x = 0; x < board.GetLength(1); x++)
+            {
+                if (board[y, x] != "  ")
+                    tiles.Add(board[y, x]);
+
+                char direction = board[y, x][1];
+                if (direction == ' ')
+                    direction = 'x';
+                sb.Append(direction);
+            }
+            sb.Append(' ');
+        }
+
+        rand.Shuffle(CollectionsMarshal.AsSpan(tiles));
+        for (int i = 0; i < tiles.Count; i++)
+        {
+            sb.Append(tiles[i]);
+            if (i != tiles.Count - 1)
+                sb.Append(' ');
+        }
+
+        return sb.ToString();
     }
 }

@@ -1,0 +1,1 @@
+taken from here: https://web.archive.org/web/20180814172021/http://www.greenworm.net/notes/2011/05/02/words-friends-wordlist
