@@ -27,6 +27,16 @@
 
 <script>
 
+    // https://stackoverflow.com/a/12646864
+    function shuffleArray(array) {
+        for (var i = array.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var temp = array[i];
+            array[i] = array[j];
+            array[j] = temp;
+        }
+    }
+
     function parseGameString(gameString)
     {
         const board = [];
@@ -69,30 +79,79 @@
             }
         }
 
+        const solutionBoard = [];
+        for (let y = 0; y < boardTilesH; y++)
+        {
+            const row = [];
+            solutionBoard.push(row);
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                const letter = gameString[i];
+                const direction = gameString[i + 1];
+                row.push(letter+direction);
+                i += 2;
+            }
+        }
+
         for (let y = 0; y < boardTilesH; y++)
         {
             const row = [];
             board.push(row);
             for (let x = 0; x < boardTilesW; x++)
             {
+                const letter = solutionBoard[y][x][0];
+                const direction = solutionBoard[y][x][1];
+
+                if (letter !== '-')
+                {
+                    tiles.push({
+                        x: 0,
+                        y: 0,
+                        letter: letter,
+                        direction: direction,
+                        boardPos: null,
+                    })
+                }
+
+                let pointAtX = x;
+                let pointAtY = y;
+                if (direction === "<")
+                    pointAtX--;
+                else if (direction === ">")
+                    pointAtX++;
+                else if (direction === "^")
+                    pointAtY--;
+                else if (direction === "v")
+                    pointAtY++;
+
+                let pointAt = [pointAtY, pointAtX];
+                if (!(pointAtX >= 0 && pointAtX < boardTilesW && pointAtY >= 0 && pointAtY < boardTilesH))
+                    pointAt = null;
+
                 row.push({
-                    direction: gameString[i],
+                    direction: direction,
+                    tile: null,
+                    pointedAtByOtherPos: [],
+                    pointAt: pointAt,
+                    confirmed: false,
+                    pos: [y,x],
                 })
-                i++;
             }
         }
 
-        for (; i < gameString.length; i+= 2)
+        for (let y = 0; y < boardTilesH; y++)
         {
-            tiles.push({
-                x: 0,
-                y: 0,
-                letter: gameString[i],
-                direction: gameString[i+1],
-            })
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                const boardPos = board[y][x];
+                if (boardPos.pointAt !== null)
+                    board[boardPos.pointAt[0]][boardPos.pointAt[1]].pointedAtByOtherPos.push([y,x]);
+            }
         }
 
-        return [board, tiles]
+        shuffleArray(tiles);
+
+        return [board, tiles, solutionBoard];
     }
 
     function randomScatterTiles(tileSpawnTop, tileSpawnBottom, tileSpawnLeft, tileSpawnRight)
@@ -154,7 +213,9 @@
         return t * t * (3 - 2 * t);
     }
 
-    const gameString = "4x4 <<<< v^x^ >^>v >>^v nv o^ p^ r^ h> g< sv u> e< k^ s< i> a< n> dv".replace(/ /g,'');
+
+    const gameString = "4x4 y<rvd<-x l^y<h<s< l^o<o>uv a^f^s^p>".replace(/ /g,'');
+    //const gameString = "4x4 rvbvev-x uvivd<hv lvb<b<o< eva^c<g^".replace(/ /g,'');
 
 
     const gameCanvas = document.getElementById("game_canvas");
@@ -191,11 +252,14 @@
 
     const BOARD_COLOR = "#aaaaa3";
     const BOARD_SLOT_COLOR = "#efefe6";
+    const BOARD_CONNECT_COLOR = "#60605c";
+    const BOARD_CONFIRMED_COLOR = "#346c17";
     const TILE_COLOR = "#5a594e";
+    const TILE_CONFIRMED_COLOR = BOARD_CONFIRMED_COLOR;
     const TILE_BORDER_COLOR = "black";//"#3d3d35";
 
 
-    const [board, tiles] = parseGameString(gameString);
+    const [board, tiles, solutionBoard] = parseGameString(gameString);
     const boardTilesW = board[0].length;
     const boardTilesH = board.length;
 
@@ -228,6 +292,7 @@
 
 
     let selectedTile = null;
+    let snappedBoardPos = null;
     let selectOffsetX = null;
     let selectOffsetY = null;
 
@@ -235,9 +300,13 @@
     {
         for (const tile of tiles)
         {
+            let color = TILE_COLOR;
+            if (tile.boardPos && tile.boardPos.confirmed)
+                color = TILE_CONFIRMED_COLOR;
+
             ctx.beginPath();
             ctx.roundRect(tile.x-TILE_SIZE/2, tile.y-TILE_SIZE/2, TILE_SIZE, TILE_SIZE, [TILE_RADIUS]);
-            ctx.fillStyle = TILE_COLOR;
+            ctx.fillStyle = color;
             ctx.fill();
             ctx.strokeStyle = TILE_BORDER_COLOR
             ctx.lineWidth = TILE_BORDER;
@@ -257,7 +326,7 @@
                 ctx.moveTo(TILE_SIZE/2-ARROW_LONG*0.65, -ARROW_WIDE);
                 ctx.lineTo(TILE_SIZE/2-ARROW_LONG*0.65, +ARROW_WIDE);
                 ctx.lineTo(TILE_SIZE/2-ARROW_LONG*0.65+ARROW_LONG, 0);
-                ctx.fillStyle = TILE_COLOR;
+                ctx.fillStyle = color;
             ctx.fill();
             ctx.resetTransform();
 
@@ -298,19 +367,98 @@
                 ctx.fillStyle = BOARD_SLOT_COLOR;
                 ctx.fill();
 
+                let connectColour = BOARD_CONNECT_COLOR;
+                if (board[y][x].confirmed)
+                    connectColour = BOARD_CONFIRMED_COLOR
 
                 ctx.translate(slotX, slotY);
                 const rotateDegrees = {">": 0, "v": 90, "<": 180, "^": 270}[direction]
                 ctx.rotate(rotateDegrees * Math.PI / 180);
                 ctx.beginPath();
-                ctx.moveTo(TILE_SIZE/2-1, -ARROW_WIDE);
-                ctx.lineTo(TILE_SIZE/2-1, +ARROW_WIDE);
-                ctx.lineTo(TILE_SIZE/2+ARROW_LONG-1, 0);
-                ctx.fillStyle = BOARD_SLOT_COLOR;
+                    ctx.fillStyle = connectColour;
+                    ctx.fillRect(TILE_SIZE/2, -((ARROW_WIDE*2.5)/2), +BOARD_PAD, ARROW_WIDE*2.5);
+                ctx.beginPath();
+                    ctx.moveTo(TILE_SIZE/2-1, -ARROW_WIDE);
+                    ctx.lineTo(TILE_SIZE/2-1, +ARROW_WIDE);
+                    ctx.lineTo(TILE_SIZE/2+ARROW_LONG-1, 0);
+                    ctx.fillStyle = BOARD_SLOT_COLOR;
                 ctx.fill();
                 ctx.resetTransform();
             }
         }
+    }
+
+    function confirmTiles()
+    {
+        for (let y = 0; y < boardTilesH; y++)
+        {
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                const boardPos = board[y][x];
+                boardPos.confirmed = false;
+            }
+        }
+
+        for (let y = 0; y < boardTilesH; y++)
+        {
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                const boardPos = board[y][x];
+
+                if (boardPos.pointedAtByOtherPos.length !== 0)
+                    continue;
+
+                let ok = true;
+                {
+                    function check(posToCheck)
+                    {
+                        const solutionItem = solutionBoard[posToCheck.pos[0]][posToCheck.pos[1]];
+                        if (!(posToCheck.tile && posToCheck.tile.letter === solutionItem[0] && solutionItem[1]))
+                            ok = false;
+                    }
+
+                    let current = boardPos;
+                    check(current);
+                    while (current.pointAt)
+                    {
+                        current = board[current.pointAt[0]][current.pointAt[1]];
+                        check(current);
+                    }
+                }
+
+                if (ok)
+                {
+                    let current = boardPos;
+                    current.confirmed = true;
+                    while (current.pointAt)
+                    {
+                        current = board[current.pointAt[0]][current.pointAt[1]];
+                        current.confirmed = true;
+                    }
+                }
+            }
+        }
+
+        let won = true;
+        for (let y = 0; y < boardTilesH; y++)
+        {
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                const boardPos = board[y][x];
+
+                if (boardPos.direction === 'x')
+                    continue;
+
+                if (!boardPos.confirmed)
+                {
+                    won = false;
+                    break;
+                }
+            }
+        }
+
+        if (won)
+            alert("WINNER");
     }
 
     function render()
@@ -324,12 +472,43 @@
     }
     requestAnimationFrame(render);
 
-    gameCanvas.addEventListener('mousemove', (e) =>
+
+    function onMouseMove(mouseX, mouseY)
     {
         if (!selectedTile)
             return;
-        selectedTile.x = e.offsetX * window.devicePixelRatio + selectOffsetX;
-        selectedTile.y = e.offsetY * window.devicePixelRatio + selectOffsetY;
+
+        selectedTile.x = mouseX;
+        selectedTile.y = mouseY;
+
+        snappedBoardPos = null;
+        for (let y = 0; y < boardTilesH; y++)
+        {
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                const boardPos = board[y][x];
+
+                if (selectedTile.direction !== boardPos.direction || (boardPos.tile !== null && boardPos !== selectedTile))
+                    continue;
+
+                const slotX = boardX + BOARD_PAD + x * (TILE_SIZE + BOARD_PAD) + TILE_SIZE / 2;
+                const slotY = boardY + BOARD_PAD + y * (TILE_SIZE + BOARD_PAD) + TILE_SIZE / 2;
+
+                let distSqr = (slotX-selectedTile.x)*(slotX-selectedTile.x) + (slotY-selectedTile.y)*(slotY-selectedTile.y);
+
+                if (distSqr < (TILE_SIZE/2)*(TILE_SIZE/2))
+                {
+                    selectedTile.x = slotX;
+                    selectedTile.y = slotY;
+                    snappedBoardPos = boardPos;
+                }
+            }
+        }
+    }
+
+    gameCanvas.addEventListener('mousemove', (e) =>
+    {
+        onMouseMove(e.offsetX * window.devicePixelRatio, e.offsetY * window.devicePixelRatio);
     });
 
     gameCanvas.addEventListener('mousedown', (e) =>
@@ -342,8 +521,6 @@
         {
             const tile = tiles[i];
 
-
-
             const l = tile.x-TILE_SIZE/2;
             const r = tile.x+TILE_SIZE/2;
             const t = tile.y-TILE_SIZE/2;
@@ -352,18 +529,35 @@
             if (mx >= l && mx <= r && my >= t && my <= b)
             {
                 selectedTile = tile;
+                if (selectedTile.boardPos)
+                {
+                    selectedTile.boardPos.tile = null;
+                    selectedTile.boardPos = null;
+                }
                 tiles.splice(i, 1);
                 tiles.push(selectedTile);
                 selectOffsetX = selectedTile.x - mx;
                 selectOffsetY = selectedTile.y - my
-                return
+                confirmTiles();
+                break;
             }
         }
+
+        onMouseMove(mx, my);
     });
 
     gameCanvas.addEventListener('mouseup', (e) =>
     {
+        if (selectedTile)
+        {
+            selectedTile.boardPos = snappedBoardPos;
+            if (snappedBoardPos)
+                snappedBoardPos.tile = selectedTile;
+        }
         selectedTile = null;
+        snappedBoardPos = null;
+
+        confirmTiles();
     });
 
 </script>

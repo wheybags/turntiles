@@ -435,6 +435,44 @@ public static class Program
         }
     }
 
+    //static string serialiseGame(string[,] board)
+    //{
+    //    StringBuilder sb = new StringBuilder();
+
+    //    sb.Append(board.GetLength(1));
+    //    sb.Append('x');
+    //    sb.Append(board.GetLength(0));
+    //    sb.Append(' ');
+
+    //    List<string> tiles = new List<string>();
+
+    //    for (int y = 0; y < board.GetLength(0); y++)
+    //    {
+    //        for (int x = 0; x < board.GetLength(1); x++)
+    //        {
+    //            if (board[y, x] != "  ")
+    //                tiles.Add(board[y, x]);
+
+    //            char direction = board[y, x][1];
+    //            if (direction == ' ')
+    //                direction = 'x';
+    //            sb.Append(direction);
+    //        }
+    //        sb.Append(' ');
+    //    }
+
+    //    rand.Shuffle(CollectionsMarshal.AsSpan(tiles));
+    //    for (int i = 0; i < tiles.Count; i++)
+    //    {
+    //        sb.Append(tiles[i]);
+    //        if (i != tiles.Count - 1)
+    //            sb.Append(' ');
+    //    }
+
+    //    return sb.ToString();
+    //}
+
+
     static string serialiseGame(string[,] board)
     {
         StringBuilder sb = new StringBuilder();
@@ -455,18 +493,11 @@ public static class Program
 
                 char direction = board[y, x][1];
                 if (direction == ' ')
-                    direction = 'x';
-                sb.Append(direction);
+                    sb.Append("-x");
+                else
+                    sb.Append(board[y,x]);
             }
             sb.Append(' ');
-        }
-
-        rand.Shuffle(CollectionsMarshal.AsSpan(tiles));
-        for (int i = 0; i < tiles.Count; i++)
-        {
-            sb.Append(tiles[i]);
-            if (i != tiles.Count - 1)
-                sb.Append(' ');
         }
 
         return sb.ToString();
