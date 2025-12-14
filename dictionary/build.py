@@ -68,6 +68,8 @@ with open('wwf_data/enable1-wwf-v4.0-wordlist-deletions.txt', 'r') as file:
     for line in file:
         words.append(line.strip())
 
+words.sort()
+
 naughty = set([])
 with open('naughty.txt', 'r') as file:
     for line in file:
@@ -87,10 +89,10 @@ with open('dictionary_for_generation.txt', 'wb') as file:
         if i != count - 1:
             file.write('\n'.encode('utf-8'))
 
-with open('dictionary_full.txt', 'wb') as file:
-    count = len(words_with_freq)
+with open('../web/dictionary_full.txt', 'wb') as file:
+    count = len(words)
     for i in range(count):
-        word = words_with_freq[i][0]
+        word = words[i]
         file.write(word.encode('utf-8'))
         if i != count - 1:
             file.write('\n'.encode('utf-8'))
