@@ -362,27 +362,49 @@
                 const slotX = boardX + BOARD_PAD + x*(TILE_SIZE+BOARD_PAD) + TILE_SIZE/2;
                 const slotY = boardY + BOARD_PAD + y*(TILE_SIZE+BOARD_PAD) + TILE_SIZE/2;
 
+                let connectColour = BOARD_CONNECT_COLOR;
+                if (board[y][x].confirmed)
+                    connectColour = BOARD_CONFIRMED_COLOR
+
+                const rotateDegrees = {">": 0, "v": 90, "<": 180, "^": 270}[direction]
+
+                const connectionWide = ARROW_WIDE *2;
+
+                ctx.translate(slotX, slotY);
+                ctx.rotate(rotateDegrees * Math.PI / 180);
+                {
+                    if (board[y][x].pointedAtByOtherPos.length === 0)
+                    {
+                        ctx.beginPath();
+                        ctx.arc(-TILE_SIZE / 2 - 1, 0, connectionWide/2, 0, 2 * Math.PI);
+                        ctx.fillStyle = connectColour;
+                        ctx.fill();
+                    }
+
+                    if (board[y][x].pointAt)
+                    {
+                        ctx.beginPath();
+                        ctx.fillStyle = connectColour;
+                        ctx.fillRect(TILE_SIZE / 2, -(connectionWide / 2), BOARD_PAD, connectionWide);
+                    }
+                }
+                ctx.resetTransform();
+
                 ctx.beginPath();
                 ctx.roundRect(slotX-TILE_SIZE/2, slotY-TILE_SIZE/2, TILE_SIZE, TILE_SIZE, [TILE_RADIUS]);
                 ctx.fillStyle = BOARD_SLOT_COLOR;
                 ctx.fill();
 
-                let connectColour = BOARD_CONNECT_COLOR;
-                if (board[y][x].confirmed)
-                    connectColour = BOARD_CONFIRMED_COLOR
-
                 ctx.translate(slotX, slotY);
-                const rotateDegrees = {">": 0, "v": 90, "<": 180, "^": 270}[direction]
                 ctx.rotate(rotateDegrees * Math.PI / 180);
-                ctx.beginPath();
-                    ctx.fillStyle = connectColour;
-                    ctx.fillRect(TILE_SIZE/2, -((ARROW_WIDE*2.5)/2), +BOARD_PAD, ARROW_WIDE*2.5);
-                ctx.beginPath();
-                    ctx.moveTo(TILE_SIZE/2-1, -ARROW_WIDE);
-                    ctx.lineTo(TILE_SIZE/2-1, +ARROW_WIDE);
-                    ctx.lineTo(TILE_SIZE/2+ARROW_LONG-1, 0);
+                {
+                    ctx.beginPath();
+                    ctx.moveTo(TILE_SIZE / 2 - 1, -ARROW_WIDE);
+                    ctx.lineTo(TILE_SIZE / 2 - 1, +ARROW_WIDE);
+                    ctx.lineTo(TILE_SIZE / 2 + ARROW_LONG - 1, 0);
                     ctx.fillStyle = BOARD_SLOT_COLOR;
-                ctx.fill();
+                    ctx.fill();
+                }
                 ctx.resetTransform();
             }
         }
@@ -478,8 +500,8 @@
         if (!selectedTile)
             return;
 
-        selectedTile.x = mouseX;
-        selectedTile.y = mouseY;
+        selectedTile.x = mouseX + selectOffsetX;
+        selectedTile.y = mouseY + selectOffsetY;
 
         snappedBoardPos = null;
         for (let y = 0; y < boardTilesH; y++)
