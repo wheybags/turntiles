@@ -3,16 +3,19 @@
 <head>
     <title>Orientile</title>
 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
     <style>
         body, html {
             padding: 0;
             margin: 0;
+            overscroll-behavior: none;
         }
 
         #game_canvas {
             background-color: rgb(230, 230, 230);
-            width: 100vw;
-            height: 100vh;
+            width: 100%;
+            height: 100%;
             padding: 0;
             margin: 0;
             position: absolute;
@@ -219,36 +222,24 @@
 
 
     const gameCanvas = document.getElementById("game_canvas");
-    gameCanvas.width = window.innerWidth * window.devicePixelRatio;
-    gameCanvas.height = window.innerHeight * window.devicePixelRatio;
+
     const ctx = gameCanvas.getContext("2d");
 
+    let scale = window.devicePixelRatio;
 
+    let TILE_SIZE = 0;
+    let TILE_RADIUS = 0;
+    let TILE_BORDER = 0;
+    let ARROW_WIDE = 0;
+    let ARROW_LONG = 0;
+    let TILE_TEXT_SIZE = 0;
+    let BOARD_PAD = 0;
+    let TILE_SPAWN_PAD = 0;
 
-    const scale = window.devicePixelRatio;
-
-    let TILE_SIZE;
-    let TILE_RADIUS;
-    let TILE_BORDER;
-    let ARROW_WIDE;
-    let ARROW_LONG;
-    let TILE_TEXT_SIZE;
-    let BOARD_PAD;
-    let TILE_SPAWN_PAD;
-
-    function rescale()
-    {
-        TILE_SIZE = 50 * scale;
-        TILE_RADIUS = 8 * scale;
-        TILE_BORDER = 5 * scale;
-        ARROW_WIDE = 10 * scale;
-        ARROW_LONG = 10 * scale;
-        TILE_TEXT_SIZE = 30 * scale;
-        BOARD_PAD = 15 * scale;
-        TILE_SPAWN_PAD = TILE_SIZE/2 + BOARD_PAD;
-    }
-
-    rescale();
+    let boardW = 0;
+    let boardH = 0;
+    let boardX = 0;
+    let boardY = 0;
 
     const BOARD_COLOR = "#aaaaa3";
     const BOARD_SLOT_COLOR = "#efefe6";
@@ -258,21 +249,92 @@
     const TILE_CONFIRMED_COLOR = BOARD_CONFIRMED_COLOR;
     const TILE_BORDER_COLOR = "black";//"#3d3d35";
 
-
     const [board, tiles, solutionBoard] = parseGameString(gameString);
     const boardTilesW = board[0].length;
     const boardTilesH = board.length;
 
+    function rescale()
+    {
+        gameCanvas.width = gameCanvas.clientWidth * window.devicePixelRatio;
+        gameCanvas.height = gameCanvas.clientHeight * window.devicePixelRatio;
 
-    const boardW = boardTilesW*TILE_SIZE + (boardTilesW+1)*BOARD_PAD;
-    const boardH = boardTilesH*TILE_SIZE + (boardTilesH+1)*BOARD_PAD;
+        TILE_SIZE = 50;
+        TILE_RADIUS = 8;
+        TILE_BORDER = 5;
+        ARROW_WIDE = 10;
+        ARROW_LONG = 10;
+        TILE_TEXT_SIZE = 30;
+        BOARD_PAD = 15;
+        TILE_SPAWN_PAD = TILE_SIZE/2 + BOARD_PAD;
 
-    const boardX = Math.round(gameCanvas.width/2 - boardW/2);
-    const boardY = 50;
+        let mobile = gameCanvas.clientHeight > gameCanvas.clientWidth*1.5;
 
+        if (mobile)
+        {
+            const boardTargetW = gameCanvas.clientWidth * window.devicePixelRatio * 0.8;
+            scale = boardTargetW / (boardTilesW * TILE_SIZE + (boardTilesW + 1) * BOARD_PAD);
+        }
+        else
+        {
+            scale = window.devicePixelRatio;
+        }
 
-    // const text = ctx.measureText("M");
-    // console.log(text);
+        TILE_SIZE *= scale;
+        TILE_RADIUS *= scale;
+        TILE_BORDER *= scale;
+        ARROW_WIDE *= scale;
+        ARROW_LONG *= scale;
+        TILE_TEXT_SIZE *= scale;
+        BOARD_PAD *= scale;
+
+        boardW = boardTilesW*TILE_SIZE + (boardTilesW+1)*BOARD_PAD;
+        boardH = boardTilesH*TILE_SIZE + (boardTilesH+1)*BOARD_PAD;
+
+        let oldBoardX = boardX;
+        let oldBoardY = boardY;
+
+        boardX = Math.round(gameCanvas.width / 2 - boardW / 2);
+        boardY = 30 * scale;
+
+        for (const tile of tiles)
+        {
+            let relativeX = tile.x - oldBoardX;
+            let relativeY = tile.y - oldBoardY;
+
+            tile.x = boardX + relativeX;
+            tile.y = boardY + relativeY;
+        }
+
+        for (const tile of tiles)
+        {
+            if (tile.boardPos)
+            {
+                const slotX = boardX + BOARD_PAD + tile.boardPos.pos[1] * (TILE_SIZE + BOARD_PAD) + TILE_SIZE / 2;
+                const slotY = boardY + BOARD_PAD + tile.boardPos.pos[0] * (TILE_SIZE + BOARD_PAD) + TILE_SIZE / 2;
+
+                tile.x = slotX;
+                tile.y = slotY;
+            }
+            else
+            {
+                const left = TILE_SIZE/2;
+                const right = gameCanvas.clientWidth*window.devicePixelRatio - TILE_SIZE/2;
+                const top = TILE_SIZE/2;
+                const bottom = gameCanvas.clientHeight*window.devicePixelRatio - TILE_SIZE/2;
+
+                if (tile.x < left)
+                    tile.x = left;
+                if (tile.x > right)
+                    tile.x = right;
+                if (tile.y < top)
+                    tile.y = top;
+                if (tile.y > bottom)
+                    tile.y = bottom;
+            }
+        }
+    }
+
+    rescale();
 
     {
         let tileSpawnTop = boardY + boardH + TILE_SPAWN_PAD;
@@ -483,16 +545,17 @@
             alert("WINNER");
     }
 
-    function render()
+    function update()
     {
-        ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+        rescale();
 
+        ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
         renderBoard();
         renderTiles();
 
-        requestAnimationFrame(render);
+        requestAnimationFrame(update);
     }
-    requestAnimationFrame(render);
+    update();
 
 
     function onMouseMove(mouseX, mouseY)
@@ -528,16 +591,8 @@
         }
     }
 
-    gameCanvas.addEventListener('mousemove', (e) =>
+    function onMouseDown(mx, my)
     {
-        onMouseMove(e.offsetX * window.devicePixelRatio, e.offsetY * window.devicePixelRatio);
-    });
-
-    gameCanvas.addEventListener('mousedown', (e) =>
-    {
-        const mx = e.offsetX * window.devicePixelRatio;
-        const my = e.offsetY * window.devicePixelRatio;
-
         selectedTile = null;
         for (let i = tiles.length-1; i >= 0; i--)
         {
@@ -566,9 +621,9 @@
         }
 
         onMouseMove(mx, my);
-    });
+    }
 
-    gameCanvas.addEventListener('mouseup', (e) =>
+    function onMouseUp()
     {
         if (selectedTile)
         {
@@ -580,6 +635,36 @@
         snappedBoardPos = null;
 
         confirmTiles();
+    }
+
+    gameCanvas.addEventListener('mousemove', (e) =>
+    {
+        onMouseMove(e.offsetX * window.devicePixelRatio, e.offsetY * window.devicePixelRatio);
+    });
+
+    gameCanvas.addEventListener('touchmove', (e) =>
+    {
+        onMouseMove(e.touches[0].clientX * window.devicePixelRatio, e.touches[0].clientY * window.devicePixelRatio);
+    });
+
+    gameCanvas.addEventListener('mousedown', (e) =>
+    {
+        onMouseDown(e.offsetX * window.devicePixelRatio, e.offsetY * window.devicePixelRatio);
+    });
+
+    gameCanvas.addEventListener('touchstart', (e) =>
+    {
+        onMouseDown(e.touches[0].clientX * window.devicePixelRatio, e.touches[0].clientY * window.devicePixelRatio);
+    });
+
+    gameCanvas.addEventListener('mouseup', (e) =>
+    {
+        onMouseUp();
+    });
+
+    gameCanvas.addEventListener('touchend', (e) =>
+    {
+        onMouseUp();
     });
 
 </script>
