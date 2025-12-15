@@ -231,22 +231,24 @@
         return new Set(text.split('\n'));
     }
 
-    async function loadPuzzles()
-    {
-        const response = await fetch("puzzles.json");
-        console.assert(response.ok);
-        return await response.json();
-    }
-
     function formatDate(date)
     {
         return date.getFullYear().toString() + "-" + (date.getMonth()+1).toString() + "-" + date.getDate();
     }
 
+    const dateKey = formatDate(new Date());
+
+    async function loadPuzzles()
+    {
+        const response = await fetch("puzzles.json?blah=" + dateKey); // force cache break daily
+        console.assert(response.ok);
+        return await response.json();
+    }
+
     const dictionary = await loadDictionary();
     const puzzles = await loadPuzzles();
 
-    const dateKey = formatDate(new Date());
+
     let gameString = puzzles[dateKey];
 
     // let gameString = "4x4 rvb>rvd< evt>avc< nve^k>e> tvb^i^h<";
