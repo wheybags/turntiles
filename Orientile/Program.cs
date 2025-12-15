@@ -5,6 +5,8 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.Encodings.Web;
+using System.Text.Json;
 
 public static class Program
 {
@@ -13,10 +15,76 @@ public static class Program
     {
         rand = new Random(Guid.NewGuid().GetHashCode());
 
+        if (args[0] == "daily_generate")
+        {
+            string path = Directory.GetCurrentDirectory();
+            while (!Directory.Exists(path + "/web"))
+                path = Directory.GetParent(path).FullName;
+
+            string puzzlesPath = path + "/web/puzzles.json";
+
+            DateTime today = DateTime.UtcNow.Date;
+            string fmt = "yyyy-MM-dd";
+
+            Dictionary<string, string> puzzles = new Dictionary<string, string>();
+            if (File.Exists(puzzlesPath))
+            {
+                string backupsFolder = path + "/puzzles_bak";
+                Directory.CreateDirectory(backupsFolder);
+                File.Copy(puzzlesPath, backupsFolder + "/puzzles-bak-" + today.ToString(fmt) + "-" + Guid.NewGuid().ToString() + ".json", true);
+                puzzles = JsonSerializer.Deserialize<Dictionary<string, string>>(File.ReadAllText(puzzlesPath));
+            }
+
+            string[] keys = [today.ToString(fmt), today.AddDays(1).ToString(fmt), today.AddDays(2).ToString(fmt)];
+
+            foreach (string key in keys)
+            {
+                if (!puzzles.ContainsKey(key))
+                    puzzles[key] = serialiseGame(generateBoard());
+            }
+
+            File.WriteAllText(puzzlesPath, JsonSerializer.Serialize(puzzles, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+        }
+        else
+        {
+            string[,] board = generateBoard();
+
+            List<string> tiles = new List<string>();
+            for (int y = 0; y < board.GetLength(0); y++)
+            {
+                for (int x = 0; x < board.GetLength(1); x++)
+                {
+                    if (board[y, x] != "  ")
+                        tiles.Add(board[y, x]);
+                }
+            }
+
+            rand.Shuffle(CollectionsMarshal.AsSpan(tiles));
+
+            for (int line = 0; line < 3; line++)
+            {
+                for (int i = 0; i < tiles.Count; i++)
+                {
+                    printCellLine(tiles[i], line);
+                }
+                Console.WriteLine();
+            }
+
+            printBoardLayout(board);
+            Console.WriteLine(serialiseGame(board));
+            Console.Write("Press enter to reveal solution...");
+            Console.ReadLine();
+
+            printBoard(board);
+        }
+    }
+
+    private static string[,] generateBoard()
+    {
         string[,] board = null;
         while (true)
         {
-            board = generateBoard();
+            board = generateBoardInner();
             int blankCount = 0;
             for (int y = 0; y < board.GetLength(0); y++)
             {
@@ -31,36 +99,10 @@ public static class Program
                 break;
         }
 
-        List<string> tiles = new List<string>();
-        for (int y = 0; y < board.GetLength(0); y++)
-        {
-            for (int x = 0; x < board.GetLength(1); x++)
-            {
-                if (board[y, x] != "  ")
-                    tiles.Add(board[y, x]);
-            }
-        }
-
-        rand.Shuffle(CollectionsMarshal.AsSpan(tiles));
-
-        for (int line = 0; line < 3; line++)
-        {
-            for (int i = 0; i < tiles.Count; i++)
-            {
-                printCellLine(tiles[i], line);
-            }
-            Console.WriteLine();
-        }
-
-        printBoardLayout(board);
-        Console.WriteLine(serialiseGame(board));
-        Console.Write("Press enter to reveal solution...");
-        Console.ReadLine();
-
-        printBoard(board);
+        return board;
     }
 
-    static string[,] generateBoard()
+    private static string[,] generateBoardInner()
     {
         string[,] board = new string[4, 4];
 
@@ -435,43 +477,6 @@ public static class Program
         }
     }
 
-    //static string serialiseGame(string[,] board)
-    //{
-    //    StringBuilder sb = new StringBuilder();
-
-    //    sb.Append(board.GetLength(1));
-    //    sb.Append('x');
-    //    sb.Append(board.GetLength(0));
-    //    sb.Append(' ');
-
-    //    List<string> tiles = new List<string>();
-
-    //    for (int y = 0; y < board.GetLength(0); y++)
-    //    {
-    //        for (int x = 0; x < board.GetLength(1); x++)
-    //        {
-    //            if (board[y, x] != "  ")
-    //                tiles.Add(board[y, x]);
-
-    //            char direction = board[y, x][1];
-    //            if (direction == ' ')
-    //                direction = 'x';
-    //            sb.Append(direction);
-    //        }
-    //        sb.Append(' ');
-    //    }
-
-    //    rand.Shuffle(CollectionsMarshal.AsSpan(tiles));
-    //    for (int i = 0; i < tiles.Count; i++)
-    //    {
-    //        sb.Append(tiles[i]);
-    //        if (i != tiles.Count - 1)
-    //            sb.Append(' ');
-    //    }
-
-    //    return sb.ToString();
-    //}
-
 
     static string serialiseGame(string[,] board)
     {
@@ -497,7 +502,9 @@ public static class Program
                 else
                     sb.Append(board[y,x]);
             }
-            sb.Append(' ');
+
+            if (y != board.GetLength(0)-1)
+                sb.Append(' ');
         }
 
         return sb.ToString();
