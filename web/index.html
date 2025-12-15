@@ -402,21 +402,25 @@
     rescale();
 
     {
-        let tileSpawnTop = boardY + boardH + TILE_SPAWN_PAD;
-        let tileSpawnBottom = Math.min(tileSpawnTop + boardH, gameCanvas.height - TILE_SPAWN_PAD);
+        let tileSpawnTop = boardY + boardH;
+        let tileSpawnBottom = Math.min(tileSpawnTop + boardH, gameCanvas.height);
 
         if (tileSpawnBottom < gameCanvas.height - TILE_SPAWN_PAD)
         {
             tileSpawnTop += TILE_SPAWN_PAD;
             tileSpawnBottom += TILE_SPAWN_PAD;
         }
-        const tileSpawnLeft = Math.max(TILE_SPAWN_PAD, boardX - TILE_SIZE * 2);
-        const tileSpawnRight = Math.min(gameCanvas.width - TILE_SPAWN_PAD, boardX + boardW + TILE_SIZE * 2);
+        let tileSpawnLeft = Math.max(0, boardX - TILE_SIZE * 2);
+        let tileSpawnRight = Math.min(gameCanvas.width, boardX + boardW + TILE_SIZE * 2);
+
+        const off = TILE_SIZE;
+        tileSpawnTop += off;
+        tileSpawnBottom -= off;
+        tileSpawnLeft += off;
+        tileSpawnRight -= off;
 
         randomScatterTiles(tileSpawnTop, tileSpawnBottom, tileSpawnLeft, tileSpawnRight);
     }
-
-
 
     let selectedTile = null;
     let snappedBoardPos = null;
