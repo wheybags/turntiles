@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -17,7 +18,7 @@ public static class Program
 
         if (args[0] == "daily_generate")
         {
-            string path = Directory.GetCurrentDirectory();
+            string path = Directory.GetParent(Assembly.GetEntryAssembly().Location).FullName;
             while (!Directory.Exists(path + "/web"))
                 path = Directory.GetParent(path).FullName;
 
@@ -347,7 +348,7 @@ public static class Program
 
     public static Dictionary<int, List<string>> getWords()
     {
-        string path = Directory.GetCurrentDirectory();
+        string path = Directory.GetParent(Assembly.GetEntryAssembly().Location).FullName;
         while (!Directory.Exists(path + "/dictionary"))
             path = Directory.GetParent(path).FullName;
 
