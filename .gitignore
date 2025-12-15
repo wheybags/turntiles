@@ -429,4 +429,7 @@ FodyWeavers.xsd
 
 
 web/puzzles.json
+web/game.js
+web/game.js.map
 puzzles_bak/
+web/.idea
