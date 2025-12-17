@@ -577,11 +577,11 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                     const value = confirmed ? ENUM_TILESTATUS_CONFIRMED : ENUM_TILESTATUS_VALIDWORD;
 
                     let current = boardPos;
-                    current.confirmed = value;
+                    current.confirmed = Math.max(current.confirmed, value);
                     while (current.pointAt)
                     {
                         current = board[current.pointAt[0]][current.pointAt[1]];
-                        current.confirmed = value;
+                        current.confirmed = Math.max(current.confirmed, value);
                     }
                 }
             }
