@@ -1,48 +1,25 @@
 import {
-    assert, BlankLetter,
-    type Direction,
+    assert,
+    BlankLetter,
     formatDate,
     type MaybeDirection,
-    type MaybeLetter, parseDirection, parseMaybeDirection, parseMaybeLetter,
+    type MaybeLetter,
+    parseDirection,
+    parseMaybeDirection,
+    parseMaybeLetter,
     shuffleArray
 } from "../common/Common.ts";
 import {SolutionBoard, type SolutionBoardSlot} from "../common/SolutionBoard.ts";
 import {Vec2} from "../common/Vec.ts";
-
-interface Tile
-{
-    x: number,
-    y: number,
-    letter: string,
-    direction: Direction,
-    boardPos: BoardSlot | null,
-}
-
-interface BoardSlot
-{
-    direction: MaybeDirection,
-    tile: Tile | null,
-    pointedAtByOtherPos: Array<Vec2>,
-    pointAt: Vec2 | null,
-    confirmed: number,
-    pos: Vec2,
-}
-
-type Board = BoardSlot[][];
-
-const ENUM_TILESTATUS_INVALID   = 0
-const ENUM_TILESTATUS_VALIDWORD = 1;
-const ENUM_TILESTATUS_CONFIRMED = 2;
-
+import {type BoardSlot, GameBoard, type Tile, TileStatus} from "./GameBoard.ts";
 
 
 (async () => {
 
-    function parseGameString(gameString: string): [Board, Tile[], SolutionBoard]
+    function parseGameString(gameString: string): [GameBoard, Tile[], SolutionBoard]
     {
         gameString = gameString.replace(/ /g,'');
 
-        const board: Board = [];
         const tiles: Tile[] = [];
 
         let i = 0;
@@ -94,10 +71,9 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
             }
         }
 
+        const board = new GameBoard(boardTilesW, boardTilesH);
         for (let y = 0; y < boardTilesH; y++)
         {
-            const row: BoardSlot[] = [];
-            board.push(row);
             for (let x = 0; x < boardTilesW; x++)
             {
                 const letter: MaybeLetter = solutionBoard.get(x, y).letter;
@@ -129,24 +105,19 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                 if (!(pointAtX >= 0 && pointAtX < boardTilesW && pointAtY >= 0 && pointAtY < boardTilesH))
                     pointAt = null;
 
-                row.push({
-                    direction: direction,
-                    tile: null,
-                    pointedAtByOtherPos: [],
-                    pointAt: pointAt,
-                    confirmed: ENUM_TILESTATUS_INVALID,
-                    pos: new Vec2(x, y),
-                })
+                const slot: BoardSlot = board.get(x, y);
+                slot.direction = direction;
+                slot.pointAt = pointAt;
             }
         }
 
-        for (let y = 0; y < boardTilesH; y++)
+        for (let y: number = 0; y < boardTilesH; y++)
         {
-            for (let x = 0; x < boardTilesW; x++)
+            for (let x: number = 0; x < boardTilesW; x++)
             {
-                const boardPos = board[y][x];
+                const boardPos: BoardSlot = board.get(x, y);
                 if (boardPos.pointAt !== null)
-                    board[boardPos.pointAt.y][boardPos.pointAt.x].pointedAtByOtherPos.push(new Vec2(x, y));
+                    board.get(boardPos.pointAt).pointedAtByOtherPos.push(new Vec2(x, y));
             }
         }
 
@@ -272,8 +243,6 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
     const TILE_BORDER_COLOR = "black";//"#3d3d35";
 
     const [board, tiles, solutionBoard] = parseGameString(gameString);
-    const boardTilesW = board[0].length;
-    const boardTilesH = board.length;
 
     const ENUM_GAMESTATE_NOTWON = 0;
     const ENUM_GAMESTATE_WON_CONFIRMED = 1;
@@ -299,7 +268,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
         if (mobile)
         {
             const boardTargetW = gameCanvas.clientWidth * window.devicePixelRatio * 0.8;
-            scale = boardTargetW / (boardTilesW * TILE_SIZE + (boardTilesW + 1) * BOARD_PAD);
+            scale = boardTargetW / (board.w * TILE_SIZE + (board.w + 1) * BOARD_PAD);
         }
         else
         {
@@ -314,8 +283,8 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
         TILE_TEXT_SIZE *= scale;
         BOARD_PAD *= scale;
 
-        boardW = boardTilesW*TILE_SIZE + (boardTilesW+1)*BOARD_PAD;
-        boardH = boardTilesH*TILE_SIZE + (boardTilesH+1)*BOARD_PAD;
+        boardW = board.w*TILE_SIZE + (board.w+1)*BOARD_PAD;
+        boardH = board.h*TILE_SIZE + (board.h+1)*BOARD_PAD;
 
         let oldBoardX = boardX;
         let oldBoardY = boardY;
@@ -394,9 +363,9 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
         for (const tile of tiles)
         {
             let color = TILE_COLOR;
-            if (tile.boardPos && tile.boardPos.confirmed === ENUM_TILESTATUS_CONFIRMED)
+            if (tile.boardPos && tile.boardPos.confirmed === TileStatus.Confirmed)
                 color = TILE_CONFIRMED_COLOR;
-            else if (gameState === ENUM_GAMESTATE_WON_ORIGINAL && tile.boardPos!.confirmed === ENUM_TILESTATUS_VALIDWORD)
+            else if (gameState === ENUM_GAMESTATE_WON_ORIGINAL && tile.boardPos!.confirmed === TileStatus.ValidWord)
                 color = BOARD_VALIDWORD_WIN_COLOR;
 
             ctx.beginPath();
@@ -445,11 +414,11 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
         ctx.fillStyle = BOARD_COLOR;
         ctx.fill();
 
-        for (let y = 0; y < boardTilesH; y++)
+        for (let y = 0; y < board.h; y++)
         {
-            for (let x = 0; x < boardTilesW; x++)
+            for (let x = 0; x < board.w; x++)
             {
-                const direction = board[y][x].direction;
+                const direction = board.get(x, y).direction;
 
                 if (direction === "x")
                     continue;
@@ -458,9 +427,9 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                 const slotY = boardY + BOARD_PAD + y*(TILE_SIZE+BOARD_PAD) + TILE_SIZE/2;
 
                 let connectColour = BOARD_CONNECT_COLOR;
-                if (board[y][x].confirmed === ENUM_TILESTATUS_CONFIRMED)
+                if (board.get(x, y).confirmed === TileStatus.Confirmed)
                     connectColour = BOARD_CONFIRMED_COLOR
-                else if (gameState === ENUM_GAMESTATE_WON_ORIGINAL && board[y][x].confirmed === ENUM_TILESTATUS_VALIDWORD)
+                else if (gameState === ENUM_GAMESTATE_WON_ORIGINAL && board.get(x, y).confirmed === TileStatus.ValidWord)
                     connectColour = BOARD_VALIDWORD_WIN_COLOR;
 
                 const rotateDegrees = {">": 0, "v": 90, "<": 180, "^": 270}[direction]
@@ -470,7 +439,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                 ctx.translate(slotX, slotY);
                 ctx.rotate(rotateDegrees * Math.PI / 180);
                 {
-                    if (board[y][x].pointedAtByOtherPos.length === 0)
+                    if (board.get(x, y).pointedAtByOtherPos.length === 0)
                     {
                         ctx.beginPath();
                         ctx.arc(-TILE_SIZE / 2 - 1, 0, connectionWide/2, 0, 2 * Math.PI);
@@ -478,7 +447,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                         ctx.fill();
                     }
 
-                    if (board[y][x].pointAt)
+                    if (board.get(x, y).pointAt)
                     {
                         ctx.beginPath();
                         ctx.fillStyle = connectColour;
@@ -509,20 +478,20 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
 
     function confirmTiles()
     {
-        for (let y = 0; y < boardTilesH; y++)
+        for (let y: number = 0; y < board.h; y++)
         {
-            for (let x = 0; x < boardTilesW; x++)
+            for (let x: number = 0; x < board.w; x++)
             {
-                const boardPos = board[y][x];
-                boardPos.confirmed = ENUM_TILESTATUS_INVALID;
+                const boardPos: BoardSlot = board.get(x, y);
+                boardPos.confirmed = TileStatus.Invalid;
             }
         }
 
-        for (let y = 0; y < boardTilesH; y++)
+        for (let y: number = 0; y < board.h; y++)
         {
-            for (let x = 0; x < boardTilesW; x++)
+            for (let x: number = 0; x < board.w; x++)
             {
-                const boardPos = board[y][x];
+                const boardPos: BoardSlot = board.get(x, y);
 
                 if (boardPos.pointedAtByOtherPos.length !== 0)
                     continue;
@@ -548,7 +517,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                     check(current);
                     while (current.pointAt)
                     {
-                        current = board[current.pointAt.y][current.pointAt.x];
+                        current = board.get(current.pointAt);
                         check(current);
                     }
                 }
@@ -557,13 +526,13 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
 
                 if (confirmed || valid)
                 {
-                    const value = confirmed ? ENUM_TILESTATUS_CONFIRMED : ENUM_TILESTATUS_VALIDWORD;
+                    const value: TileStatus = confirmed ? TileStatus.Confirmed : TileStatus.ValidWord;
 
                     let current = boardPos;
                     current.confirmed = Math.max(current.confirmed, value);
                     while (current.pointAt)
                     {
-                        current = board[current.pointAt.y][current.pointAt.x];
+                        current = board.get(current.pointAt);
                         current.confirmed = Math.max(current.confirmed, value);
                     }
                 }
@@ -572,19 +541,19 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
 
         gameState = ENUM_GAMESTATE_WON_CONFIRMED;
 
-        outer: for (let y = 0; y < boardTilesH; y++)
+        outer: for (let y = 0; y < board.h; y++)
         {
-            for (let x = 0; x < boardTilesW; x++)
+            for (let x = 0; x < board.w; x++)
             {
-                const boardPos = board[y][x];
+                const boardPos = board.get(x, y);
 
                 if (boardPos.direction === 'x')
                     continue;
 
-                if (boardPos.confirmed === ENUM_TILESTATUS_VALIDWORD)
+                if (boardPos.confirmed === TileStatus.ValidWord)
                     gameState = ENUM_GAMESTATE_WON_ORIGINAL;
 
-                if (boardPos.confirmed === ENUM_TILESTATUS_INVALID)
+                if (boardPos.confirmed === TileStatus.Invalid)
                 {
                     gameState = ENUM_GAMESTATE_NOTWON;
                     break outer;
@@ -626,11 +595,11 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
         selectedTile.y = mouseY + selectOffsetY!;
 
         snappedBoardPos = null;
-        for (let y = 0; y < boardTilesH; y++)
+        for (let y = 0; y < board.h; y++)
         {
-            for (let x = 0; x < boardTilesW; x++)
+            for (let x = 0; x < board.w; x++)
             {
-                const boardPos = board[y][x];
+                const boardPos = board.get(x, y);
 
                 if (selectedTile.direction !== boardPos.direction || (boardPos.tile !== null && boardPos.tile !== selectedTile))
                     continue;
