@@ -1,4 +1,10 @@
-import {assert, BlankDirection, type Direction, type MaybeDirection} from "../common/Common.ts";
+import {
+    assert,
+    BlankDirection,
+    type Direction, dirToVec,
+    type MaybeDirection,
+} from "../common/Common.ts";
+import type {SolutionBoard, SolutionBoardSlot} from "../common/SolutionBoard.ts";
 import { Vec2 } from "../common/Vec.ts";
 
 export interface Tile
@@ -51,6 +57,38 @@ export class GameBoard
                 });
             }
         }
+    }
+
+    static loadFromSolutionBoard(solutionBoard: SolutionBoard): GameBoard
+    {
+        const gameBoard = new GameBoard(solutionBoard.w, solutionBoard.h);
+        for (let y = 0; y < gameBoard.h; y++)
+        {
+            for (let x = 0; x < gameBoard.w; x++)
+            {
+                const solutionSlot: SolutionBoardSlot = solutionBoard.get(x, y);
+
+                let pointAt: Vec2 | null = new Vec2(x, y).plus(dirToVec(solutionSlot.direction));
+                if (!(pointAt.x >= 0 && pointAt.x < gameBoard.w && pointAt.y >= 0 && pointAt.y < gameBoard.h))
+                    pointAt = null;
+
+                const slot: BoardSlot = gameBoard.get(x, y);
+                slot.direction = solutionSlot.direction;
+                slot.pointAt = pointAt;
+            }
+        }
+
+        for (let y: number = 0; y < gameBoard.h; y++)
+        {
+            for (let x: number = 0; x < gameBoard.w; x++)
+            {
+                const boardPos: BoardSlot = gameBoard.get(x, y);
+                if (boardPos.pointAt !== null)
+                    gameBoard.get(boardPos.pointAt).pointedAtByOtherPos.push(new Vec2(x, y));
+            }
+        }
+
+        return gameBoard;
     }
 
     public get(x: number, y: number): BoardSlot;

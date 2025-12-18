@@ -1,4 +1,4 @@
-import {SolutionBoard} from "./SolutionBoard.ts";
+import {Vec2} from "./Vec.ts";
 
 export type Direction = '^' | 'v' | '<' | '>';
 export type MaybeDirection = Direction | 'x';
@@ -35,6 +35,20 @@ export function parseMaybeLetter(char: string): MaybeLetter
         return char;
     return parseLetter(char);
 }
+
+export function dirToVec(dirChar: MaybeDirection): Vec2
+{
+    switch (dirChar)
+    {
+        case '^': return new Vec2( 0, -1);
+        case 'v': return new Vec2( 0,  1);
+        case '<': return new Vec2(-1,  0);
+        case '>': return new Vec2( 1,  0);
+        case 'x': return new Vec2(0, 0);
+    }
+    throw new Error("unreachable");
+}
+
 
 export function assert(val: any): void
 {

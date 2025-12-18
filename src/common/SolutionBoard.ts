@@ -1,4 +1,11 @@
-import {assert, BlankDirection, BlankLetter, type MaybeDirection, type MaybeLetter} from "./Common.ts";
+import {
+    assert,
+    BlankDirection,
+    BlankLetter,
+    type MaybeDirection,
+    type MaybeLetter, parseMaybeDirection,
+    parseMaybeLetter
+} from "./Common.ts";
 import type {Vec2} from "./Vec.ts";
 
 export interface SolutionBoardSlot
@@ -68,6 +75,62 @@ export class SolutionBoard
         }
 
         return sb.join("");
+    }
+
+    static deserialise(gameString: string): SolutionBoard
+    {
+        gameString = gameString.replace(/ /g,'');
+
+        let i = 0;
+        let acc = "";
+
+        let boardTilesW = 0;
+        for (; i < gameString.length; i++)
+        {
+            if (gameString[i] === 'x')
+            {
+                boardTilesW = parseInt(acc);
+                acc = "";
+                break;
+            }
+            else
+            {
+                assert(!!gameString[i].match(/[0-9]/i));
+                acc += gameString[i];
+            }
+        }
+
+        assert(gameString[i] === 'x');
+        i++;
+
+        let boardTilesH = 0;
+        for (; i < gameString.length; i++)
+        {
+            if (!gameString[i].match(/[0-9]/i))
+            {
+                boardTilesH = parseInt(acc);
+                acc = "";
+                break;
+            }
+            else
+            {
+                acc += gameString[i];
+            }
+        }
+
+        const solutionBoard = new SolutionBoard(boardTilesW, boardTilesH);
+        for (let y = 0; y < boardTilesH; y++)
+        {
+            for (let x = 0; x < boardTilesW; x++)
+            {
+                const letter: MaybeLetter = parseMaybeLetter(gameString[i]);
+                const direction: MaybeDirection = parseMaybeDirection(gameString[i + 1]);
+                solutionBoard.set(x, y, {letter, direction});
+                i += 2;
+            }
+        }
+
+        return solutionBoard;
     }
 
     public printAnsi()

@@ -2,129 +2,14 @@ import {
     assert,
     BlankLetter,
     formatDate,
-    type MaybeDirection,
-    type MaybeLetter,
     parseDirection,
-    parseMaybeDirection,
-    parseMaybeLetter,
     shuffleArray
 } from "../common/Common.ts";
 import {SolutionBoard, type SolutionBoardSlot} from "../common/SolutionBoard.ts";
-import {Vec2} from "../common/Vec.ts";
 import {type BoardSlot, GameBoard, type Tile, TileStatus} from "./GameBoard.ts";
 
 
 (async () => {
-
-    function parseGameString(gameString: string): [GameBoard, Tile[], SolutionBoard]
-    {
-        gameString = gameString.replace(/ /g,'');
-
-        const tiles: Tile[] = [];
-
-        let i = 0;
-        let acc = "";
-
-        let boardTilesW = 0;
-        for (; i < gameString.length; i++)
-        {
-            if (gameString[i] === 'x')
-            {
-                boardTilesW = parseInt(acc);
-                acc = "";
-                break;
-            }
-            else
-            {
-                assert(!!gameString[i].match(/[0-9]/i));
-                acc += gameString[i];
-            }
-        }
-
-        assert(gameString[i] === 'x');
-        i++;
-
-        let boardTilesH = 0;
-        for (; i < gameString.length; i++)
-        {
-            if (!gameString[i].match(/[0-9]/i))
-            {
-                boardTilesH = parseInt(acc);
-                acc = "";
-                break;
-            }
-            else
-            {
-                acc += gameString[i];
-            }
-        }
-
-        const solutionBoard = new SolutionBoard(boardTilesW, boardTilesH);
-        for (let y = 0; y < boardTilesH; y++)
-        {
-            for (let x = 0; x < boardTilesW; x++)
-            {
-                const letter: MaybeLetter = parseMaybeLetter(gameString[i]);
-                const direction: MaybeDirection = parseMaybeDirection(gameString[i + 1]);
-                solutionBoard.set(x, y, {letter, direction});
-                i += 2;
-            }
-        }
-
-        const board = new GameBoard(boardTilesW, boardTilesH);
-        for (let y = 0; y < boardTilesH; y++)
-        {
-            for (let x = 0; x < boardTilesW; x++)
-            {
-                const letter: MaybeLetter = solutionBoard.get(x, y).letter;
-                const direction: MaybeDirection = solutionBoard.get(x, y).direction;
-
-                if (letter !== BlankLetter)
-                {
-                    tiles.push({
-                        x: 0,
-                        y: 0,
-                        letter: letter,
-                        direction: parseDirection(direction),
-                        boardPos: null,
-                    })
-                }
-
-                let pointAtX = x;
-                let pointAtY = y;
-                if (direction === "<")
-                    pointAtX--;
-                else if (direction === ">")
-                    pointAtX++;
-                else if (direction === "^")
-                    pointAtY--;
-                else if (direction === "v")
-                    pointAtY++;
-
-                let pointAt: Vec2 | null = new Vec2(pointAtX, pointAtY);
-                if (!(pointAtX >= 0 && pointAtX < boardTilesW && pointAtY >= 0 && pointAtY < boardTilesH))
-                    pointAt = null;
-
-                const slot: BoardSlot = board.get(x, y);
-                slot.direction = direction;
-                slot.pointAt = pointAt;
-            }
-        }
-
-        for (let y: number = 0; y < boardTilesH; y++)
-        {
-            for (let x: number = 0; x < boardTilesW; x++)
-            {
-                const boardPos: BoardSlot = board.get(x, y);
-                if (boardPos.pointAt !== null)
-                    board.get(boardPos.pointAt).pointedAtByOtherPos.push(new Vec2(x, y));
-            }
-        }
-
-        shuffleArray(tiles);
-
-        return [board, tiles, solutionBoard];
-    }
 
     function randomScatterTiles(tileSpawnTop: number, tileSpawnBottom: number, tileSpawnLeft: number, tileSpawnRight: number): void
     {
@@ -242,7 +127,32 @@ import {type BoardSlot, GameBoard, type Tile, TileStatus} from "./GameBoard.ts";
     const TILE_CONFIRMED_COLOR = BOARD_CONFIRMED_COLOR;
     const TILE_BORDER_COLOR = "black";//"#3d3d35";
 
-    const [board, tiles, solutionBoard] = parseGameString(gameString);
+    const solutionBoard: SolutionBoard = SolutionBoard.deserialise(gameString)
+    const board: GameBoard = GameBoard.loadFromSolutionBoard(solutionBoard);
+
+    const tiles: Tile[] = [];
+    {
+        for (let y = 0; y < board.h; y++)
+        {
+            for (let x = 0; x < board.w; x++)
+            {
+                const solutionSlot: SolutionBoardSlot = solutionBoard.get(x, y);
+
+                if (solutionSlot.letter !== BlankLetter) {
+                    tiles.push({
+                        x: 0,
+                        y: 0,
+                        letter: solutionSlot.letter,
+                        direction: parseDirection(solutionSlot.direction),
+                        boardPos: null,
+                    })
+                }
+            }
+        }
+
+        shuffleArray(tiles);
+    }
+
 
     const ENUM_GAMESTATE_NOTWON = 0;
     const ENUM_GAMESTATE_WON_CONFIRMED = 1;

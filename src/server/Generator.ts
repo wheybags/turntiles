@@ -2,7 +2,13 @@ import { SolutionBoard} from "../common/SolutionBoard.ts";
 import path from "path";
 import fs from "fs";
 import {Vec2} from "../common/Vec.ts";
-import {assert, BlankDirection, BlankLetter, type Direction, type Letter, parseLetter} from "../common/Common.ts";
+import {
+    BlankDirection,
+    BlankLetter,
+    type Direction,
+    dirToVec,
+    parseLetter
+} from "../common/Common.ts";
 
 function randomIntFromInterval(min: number, max: number): number { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min);
@@ -199,18 +205,6 @@ function placeWord(word: string, board: SolutionBoard, startX: number, startY: n
 }
 
 const dirChars: Direction[] = [ '^', 'v', '<', '>' ];
-
-function dirToVec(dirChar: string): Vec2
-{
-    switch (dirChar)
-    {
-        case '^': return new Vec2( 0, -1);
-        case 'v': return new Vec2( 0,  1);
-        case '<': return new Vec2(-1,  0);
-        case '>': return new Vec2( 1,  0);
-    }
-    throw new Error("unreachable");
-}
 
 function placeRandomPath(board: SolutionBoard, start: Vec2): number
 {
