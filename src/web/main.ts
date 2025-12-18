@@ -1,6 +1,14 @@
-import {assert, type Direction, formatDate, type MaybeDirection, shuffleArray} from "../common/Common.ts";
+import {
+    assert, BlankLetter,
+    type Direction,
+    formatDate,
+    type MaybeDirection,
+    type MaybeLetter, parseDirection, parseMaybeDirection, parseMaybeLetter,
+    shuffleArray
+} from "../common/Common.ts";
+import {SolutionBoard, type SolutionBoardSlot} from "../common/SolutionBoard.ts";
 
-type Vec2 = [number, number];
+type Vec2XX = [number, number];
 
 interface Tile
 {
@@ -15,14 +23,13 @@ interface BoardSlot
 {
     direction: MaybeDirection,
     tile: Tile | null,
-    pointedAtByOtherPos: Array<Vec2>,
-    pointAt: Vec2 | null,
+    pointedAtByOtherPos: Array<Vec2XX>,
+    pointAt: Vec2XX | null,
     confirmed: number,
-    pos: Vec2,
+    pos: Vec2XX,
 }
 
 type Board = BoardSlot[][];
-type SolutionBoard = string[][];
 
 const ENUM_TILESTATUS_INVALID   = 0
 const ENUM_TILESTATUS_VALIDWORD = 1;
@@ -76,16 +83,14 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
             }
         }
 
-        const solutionBoard: string[][] = [];
+        const solutionBoard = new SolutionBoard(boardTilesW, boardTilesH);
         for (let y = 0; y < boardTilesH; y++)
         {
-            const row: string[] = [];
-            solutionBoard.push(row);
             for (let x = 0; x < boardTilesW; x++)
             {
-                const letter = gameString[i];
-                const direction = gameString[i + 1];
-                row.push(letter+direction);
+                const letter: MaybeLetter = parseMaybeLetter(gameString[i]);
+                const direction: MaybeDirection = parseMaybeDirection(gameString[i + 1]);
+                solutionBoard.set(x, y, {letter, direction});
                 i += 2;
             }
         }
@@ -96,16 +101,16 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
             board.push(row);
             for (let x = 0; x < boardTilesW; x++)
             {
-                const letter = solutionBoard[y][x][0];
-                const direction = solutionBoard[y][x][1] as Direction;
+                const letter: MaybeLetter = solutionBoard.get(x, y).letter;
+                const direction: MaybeDirection = solutionBoard.get(x, y).direction;
 
-                if (letter !== '-')
+                if (letter !== BlankLetter)
                 {
                     tiles.push({
                         x: 0,
                         y: 0,
                         letter: letter,
-                        direction: direction,
+                        direction: parseDirection(direction),
                         boardPos: null,
                     })
                 }
@@ -121,7 +126,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                 else if (direction === "v")
                     pointAtY++;
 
-                let pointAt: Vec2 | null = [pointAtY, pointAtX];
+                let pointAt: Vec2XX | null = [pointAtY, pointAtX];
                 if (!(pointAtX >= 0 && pointAtX < boardTilesW && pointAtY >= 0 && pointAtY < boardTilesH))
                     pointAt = null;
 
@@ -529,14 +534,14 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                 {
                     function check(posToCheck: BoardSlot)
                     {
-                        const solutionItem = solutionBoard[posToCheck.pos[0]][posToCheck.pos[1]];
+                        const solutionItem: SolutionBoardSlot = solutionBoard.get(posToCheck.pos[1], posToCheck.pos[0]);
 
                         if (posToCheck.tile)
                             word += posToCheck.tile.letter;
                         else
                             word += "-";
 
-                        if (!(posToCheck.tile && posToCheck.tile.letter === solutionItem[0] && solutionItem[1]))
+                        if (!posToCheck.tile || posToCheck.tile.letter !== solutionItem.letter || posToCheck.tile.direction !== solutionItem.direction)
                             confirmed = false;
                     }
 

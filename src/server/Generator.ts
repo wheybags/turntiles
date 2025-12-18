@@ -2,7 +2,7 @@ import { SolutionBoard} from "../common/SolutionBoard.ts";
 import path from "path";
 import fs from "fs";
 import {Vec2} from "../common/Vec.ts";
-import {assert, BlankDirection, BlankLetter, type Direction, type Letter} from "../common/Common.ts";
+import {assert, BlankDirection, BlankLetter, type Direction, type Letter, parseLetter} from "../common/Common.ts";
 
 function randomIntFromInterval(min: number, max: number): number { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min);
@@ -179,14 +179,6 @@ function clear(start: Vec2, clearLen: number, board: SolutionBoard): void
         board.set(current, {letter: BlankLetter, direction: BlankDirection});
         current = current.plus(off);
     }
-}
-
-function parseLetter(char: string): Letter
-{
-    assert(char.length === 1);
-    assert(char.charCodeAt(0) >= 'a'.charCodeAt(0));
-    assert(char.charCodeAt(0) <= 'z'.charCodeAt(0));
-    return char as Letter;
 }
 
 function placeWord(word: string, board: SolutionBoard, startX: number, startY: number): void
