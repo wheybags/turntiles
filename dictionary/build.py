@@ -89,7 +89,7 @@ with open('dictionary_for_generation.txt', 'wb') as file:
         if i != count - 1:
             file.write('\n'.encode('utf-8'))
 
-with open('../web/dictionary_full.txt', 'wb') as file:
+with open('../site/dictionary_full.txt', 'wb') as file:
     count = len(words)
     for i in range(count):
         word = words[i]
