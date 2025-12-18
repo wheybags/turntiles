@@ -1,5 +1,10 @@
 export type Direction = '^' | 'v' | '<' | '>';
 export type MaybeDirection = Direction | 'x';
+export const BlankDirection: MaybeDirection = 'x'
+
+export type Letter = 'a'|'b'|'c'|'d'|'e'|'f'|'g'|'h'|'i'|'j'|'k'|'l'|'m'|'n'|'o'|'p'|'q'|'r'|'s'|'t'|'u'|'v'|'w'|'x'|'y'|'z';
+export type MaybeLetter = Letter | '-';
+export const BlankLetter: MaybeLetter = '-';
 
 export function assert(val: any): void
 {

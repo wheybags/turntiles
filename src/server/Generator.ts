@@ -1,7 +1,8 @@
-import {SolutionBoard} from "../common/SolutionBoard.ts";
+import { SolutionBoard} from "../common/SolutionBoard.ts";
 import path from "path";
 import fs from "fs";
 import {Vec2} from "../common/Vec.ts";
+import {assert, BlankDirection, BlankLetter, type Direction, type Letter} from "../common/Common.ts";
 
 function randomIntFromInterval(min: number, max: number): number { // min and max included
     return Math.floor(Math.random() * (max - min + 1) + min);
@@ -25,7 +26,7 @@ export async function generateBoard(): Promise<SolutionBoard>
         {
             for (let x: number = 0; x < board.w; x++)
             {
-                if (board.get(x, y).letter == ' ')
+                if (board.get(x, y).letter == BlankLetter)
                     blankCount++;
             }
         }
@@ -37,6 +38,18 @@ export async function generateBoard(): Promise<SolutionBoard>
     return board;
 }
 
+function trimEmptyFromStart(val: string): string
+{
+    if (val.length === 0)
+        return val;
+
+    let start: number = 0;
+    while (val[start] == BlankLetter)
+        start++;
+
+    return val.substring(start);
+}
+
 async function generateBoardInner(): Promise<SolutionBoard>
 {
     const board = new SolutionBoard(4, 4);
@@ -45,7 +58,7 @@ async function generateBoardInner(): Promise<SolutionBoard>
     {
         for (let x = 0; x < board.w; x++)
         {
-            board.set(x, y, {letter: " ", direction: " "})
+            board.set(x, y, {letter: BlankLetter, direction: BlankDirection})
         }
     }
 
@@ -58,16 +71,16 @@ async function generateBoardInner(): Promise<SolutionBoard>
         const emptyEdgeSpaces = new Array<Vec2>();
         for (let y = 0; y < board.h; y++)
         {
-            if (board.get(0, y).letter === " " && board.get(0, y).direction == " ")
+            if (board.get(0, y).letter === BlankLetter && board.get(0, y).direction == BlankDirection)
                 emptyEdgeSpaces.push(new Vec2(0, y));
-            if (board.get(board.w-1, y).letter === " " && board.get(board.w-1, y).direction === " ")
+            if (board.get(board.w-1, y).letter === BlankLetter && board.get(board.w-1, y).direction === BlankDirection)
                 emptyEdgeSpaces.push(new Vec2(board.w - 1, y));
         }
         for (let x = 0; x < board.w; x++)
         {
-            if (board.get(x, 0).letter == " " && board.get(x, 0).direction == " ")
+            if (board.get(x, 0).letter == BlankLetter && board.get(x, 0).direction == BlankDirection)
                 emptyEdgeSpaces.push(new Vec2(x, 0));
-            if (board.get(x, board.h - 1).letter == " " && board.get(x, board.h - 1).direction == " ")
+            if (board.get(x, board.h - 1).letter == BlankLetter && board.get(x, board.h - 1).direction == BlankDirection)
                 emptyEdgeSpaces.push(new Vec2(x, board.h - 1));
         }
 
@@ -84,7 +97,8 @@ async function generateBoardInner(): Promise<SolutionBoard>
         let success: boolean = false;
         if (realLen >= 4 && realLen < 7)
         {
-            const end: string = getLetters(start, board).trimStart();
+            const letters: string = getLetters(start, board);
+            const end: string = trimEmptyFromStart(letters);
             //Console.WriteLine(end);
 
             const lengthWords: Array<string> = allWords.get(realLen)!;
@@ -148,10 +162,10 @@ function getLetters(start: Vec2, board: SolutionBoard): string
 function clearInvalid(start: Vec2, board: SolutionBoard): void
 {
     let current: Vec2 = start;
-    while (board.get(current).direction != " ")
+    while (board.get(current).direction != BlankDirection)
     {
         const off: Vec2 = dirToVec(board.get(current).direction);
-        board.set(current, {letter: " ", direction: " "});
+        board.set(current, {letter: BlankLetter, direction: BlankDirection});
         current = current.plus(off);
     }
 }
@@ -162,11 +176,18 @@ function clear(start: Vec2, clearLen: number, board: SolutionBoard): void
     for (let i = 0; i < clearLen; i++)
     {
         const off: Vec2 = dirToVec(board.get(current).direction);
-        board.set(current, {letter: " ", direction: " "});
+        board.set(current, {letter: BlankLetter, direction: BlankDirection});
         current = current.plus(off);
     }
 }
 
+function parseLetter(char: string): Letter
+{
+    assert(char.length === 1);
+    assert(char.charCodeAt(0) >= 'a'.charCodeAt(0));
+    assert(char.charCodeAt(0) <= 'z'.charCodeAt(0));
+    return char as Letter;
+}
 
 function placeWord(word: string, board: SolutionBoard, startX: number, startY: number): void
 {
@@ -174,7 +195,7 @@ function placeWord(word: string, board: SolutionBoard, startX: number, startY: n
     let currentY: number = startY;
     for (let i = 0; i < word.length; i++)
     {
-        board.get(currentX, currentY).letter = word[i];
+        board.get(currentX, currentY).letter = parseLetter(word[i]);
         switch(board.get(currentX, currentY).direction)
         {
             case '^': currentY--; break;
@@ -185,7 +206,7 @@ function placeWord(word: string, board: SolutionBoard, startX: number, startY: n
     }
 }
 
-const dirChars: string[] = [ '^', 'v', '<', '>' ];
+const dirChars: Direction[] = [ '^', 'v', '<', '>' ];
 
 function dirToVec(dirChar: string): Vec2
 {
@@ -209,10 +230,10 @@ function placeRandomPath(board: SolutionBoard, start: Vec2): number
         // console.log("------------------------")
         seen.add(current.x + "," + current.y);
 
-        if (board.get(current).letter != " " || board.get(current).direction != " ")
+        if (board.get(current).letter != BlankLetter || board.get(current).direction != BlankDirection)
             return 0;
 
-        const possibleDir = new Array<string>();
+        const possibleDir = new Array<Direction>();
         for (const dirChar of dirChars)
         {
             const directionVec: Vec2 = dirToVec(dirChar);
@@ -225,10 +246,10 @@ function placeRandomPath(board: SolutionBoard, start: Vec2): number
         if (possibleDir.length == 0)
             return -1;
 
-        const directionChar: string = possibleDir[randomInt(possibleDir.length)];
+        const directionChar: Direction = possibleDir[randomInt(possibleDir.length)];
         const next: Vec2 = current.plus(dirToVec(directionChar));
 
-        board.set(current, {letter: " ", direction: directionChar});
+        board.set(current, {letter: BlankLetter, direction: directionChar});
 
         if (next.y >= board.h || next.y < 0 || next.x >= board.w || next.x < 0)
             return 1;

@@ -1,10 +1,10 @@
-import {assert, type MaybeDirection} from "./Common.ts";
+import {assert, BlankDirection, BlankLetter, type MaybeDirection, type MaybeLetter} from "./Common.ts";
 import type {Vec2} from "./Vec.ts";
 
 export interface SolutionBoardSlot
 {
-    letter: string;
-    direction: string;//MaybeDirection | ' '
+    letter: MaybeLetter;
+    direction: MaybeDirection
 }
 
 export class SolutionBoard
@@ -19,7 +19,7 @@ export class SolutionBoard
         this.h = h;
         this.data = [];
         for (let i = 0; i < w*h; i++)
-            this.data.push({letter:"-", direction:"x"});
+            this.data.push({letter: BlankLetter, direction: BlankDirection});
     }
 
     public get(x: number, y: number): SolutionBoardSlot;
@@ -59,16 +59,8 @@ export class SolutionBoard
             for (let x: number = 0; x < this.w; x++)
             {
                 const slot: SolutionBoardSlot = this.get(x, y);
-                let direction: string = slot.direction;
-                if (direction == ' ')
-                {
-                    sb.push("-x");
-                }
-                else
-                {
-                    sb.push(slot.letter);
-                    sb.push(slot.direction);
-                }
+                sb.push(slot.letter);
+                sb.push(slot.direction);
             }
 
             if (y != this.h-1)
@@ -88,7 +80,7 @@ export class SolutionBoard
             {
                 case 0:
                 {
-                    if (cell.letter === " " && cell.direction === " ")
+                    if (cell.letter === BlankLetter && cell.direction === BlankDirection)
                         sb.push("   ");
                     else if (cell.direction === '^')
                         sb.push("┌┴┐");
@@ -98,7 +90,7 @@ export class SolutionBoard
                 }
                 case 1:
                 {
-                    if (cell.letter === " " && cell.direction === " ")
+                    if (cell.letter === BlankLetter && cell.direction === BlankDirection)
                         sb.push(" x ");
                     else if (cell.direction === '<')
                         sb.push("┤" + cell.letter + "│");
@@ -110,7 +102,7 @@ export class SolutionBoard
                 }
                 case 2:
                 {
-                    if (cell.letter == " " && cell.direction === " ")
+                    if (cell.letter == BlankLetter && cell.direction === BlankDirection)
                         sb.push("   ");
                     else if (cell.direction == 'v')
                         sb.push("└┬┘");
