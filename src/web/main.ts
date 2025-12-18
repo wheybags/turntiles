@@ -7,8 +7,7 @@ import {
     shuffleArray
 } from "../common/Common.ts";
 import {SolutionBoard, type SolutionBoardSlot} from "../common/SolutionBoard.ts";
-
-type Vec2XX = [number, number];
+import {Vec2} from "../common/Vec.ts";
 
 interface Tile
 {
@@ -23,10 +22,10 @@ interface BoardSlot
 {
     direction: MaybeDirection,
     tile: Tile | null,
-    pointedAtByOtherPos: Array<Vec2XX>,
-    pointAt: Vec2XX | null,
+    pointedAtByOtherPos: Array<Vec2>,
+    pointAt: Vec2 | null,
     confirmed: number,
-    pos: Vec2XX,
+    pos: Vec2,
 }
 
 type Board = BoardSlot[][];
@@ -126,7 +125,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                 else if (direction === "v")
                     pointAtY++;
 
-                let pointAt: Vec2XX | null = [pointAtY, pointAtX];
+                let pointAt: Vec2 | null = new Vec2(pointAtX, pointAtY);
                 if (!(pointAtX >= 0 && pointAtX < boardTilesW && pointAtY >= 0 && pointAtY < boardTilesH))
                     pointAt = null;
 
@@ -136,7 +135,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                     pointedAtByOtherPos: [],
                     pointAt: pointAt,
                     confirmed: ENUM_TILESTATUS_INVALID,
-                    pos: [y,x],
+                    pos: new Vec2(x, y),
                 })
             }
         }
@@ -147,7 +146,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
             {
                 const boardPos = board[y][x];
                 if (boardPos.pointAt !== null)
-                    board[boardPos.pointAt[0]][boardPos.pointAt[1]].pointedAtByOtherPos.push([y,x]);
+                    board[boardPos.pointAt.y][boardPos.pointAt.x].pointedAtByOtherPos.push(new Vec2(x, y));
             }
         }
 
@@ -337,8 +336,8 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
         {
             if (tile.boardPos)
             {
-                const slotX = boardX + BOARD_PAD + tile.boardPos.pos[1] * (TILE_SIZE + BOARD_PAD) + TILE_SIZE / 2;
-                const slotY = boardY + BOARD_PAD + tile.boardPos.pos[0] * (TILE_SIZE + BOARD_PAD) + TILE_SIZE / 2;
+                const slotX = boardX + BOARD_PAD + tile.boardPos.pos.x * (TILE_SIZE + BOARD_PAD) + TILE_SIZE / 2;
+                const slotY = boardY + BOARD_PAD + tile.boardPos.pos.y * (TILE_SIZE + BOARD_PAD) + TILE_SIZE / 2;
 
                 tile.x = slotX;
                 tile.y = slotY;
@@ -534,7 +533,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                 {
                     function check(posToCheck: BoardSlot)
                     {
-                        const solutionItem: SolutionBoardSlot = solutionBoard.get(posToCheck.pos[1], posToCheck.pos[0]);
+                        const solutionItem: SolutionBoardSlot = solutionBoard.get(posToCheck.pos);
 
                         if (posToCheck.tile)
                             word += posToCheck.tile.letter;
@@ -549,7 +548,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                     check(current);
                     while (current.pointAt)
                     {
-                        current = board[current.pointAt[0]][current.pointAt[1]];
+                        current = board[current.pointAt.y][current.pointAt.x];
                         check(current);
                     }
                 }
@@ -564,7 +563,7 @@ const ENUM_TILESTATUS_CONFIRMED = 2;
                     current.confirmed = Math.max(current.confirmed, value);
                     while (current.pointAt)
                     {
-                        current = board[current.pointAt[0]][current.pointAt[1]];
+                        current = board[current.pointAt.y][current.pointAt.x];
                         current.confirmed = Math.max(current.confirmed, value);
                     }
                 }
