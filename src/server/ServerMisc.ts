@@ -1,8 +1,8 @@
-// added these two functions instead of using node / bun builtins as they defer closing the file,
-// which is ok on linux but not on windows (read followed by write is broken as the read locks the file)
 import type {FileHandle} from "fs/promises";
 import fs from "fs";
 
+// added these two functions instead of using node / bun builtins as they defer closing the file,
+// which is ok on linux but not on windows (read followed by write is broken as the read locks the file)
 export async function readWholeFileAsString(path: string): Promise<string>
 {
     let f: FileHandle = await fs.promises.open(path, "r");

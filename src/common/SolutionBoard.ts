@@ -157,7 +157,7 @@ export class SolutionBoard
                         sb.push(" x ");
                     else if (cell.direction === '<')
                         sb.push("┤" + cell.letter + "│");
-                    else if (cell.direction == '>')
+                    else if (cell.direction === '>')
                         sb.push("│" + cell.letter + "├");
                     else
                        sb.push("│" + cell.letter + "│");
@@ -165,9 +165,9 @@ export class SolutionBoard
                 }
                 case 2:
                 {
-                    if (cell.letter == BlankLetter && cell.direction === BlankDirection)
+                    if (cell.letter === BlankLetter && cell.direction === BlankDirection)
                         sb.push("   ");
-                    else if (cell.direction == 'v')
+                    else if (cell.direction === 'v')
                         sb.push("└┬┘");
                     else
                         sb.push("└─┘");
