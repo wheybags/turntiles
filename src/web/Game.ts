@@ -281,7 +281,7 @@ export class Game
         let oldBoardY = this.boardY;
     
         this.boardX = Math.round(this.gameCanvas.width / 2 - this.boardW / 2);
-        this.boardY = 30 * this.scale;
+        this.boardY = 60 * this.scale;
     
         for (const tile of this.tiles)
         {

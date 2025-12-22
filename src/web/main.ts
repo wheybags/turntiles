@@ -5,6 +5,8 @@ import { renderBoard, renderTiles } from "./GameRender";
 
 async function gameMain(): Promise<void>
 {
+    await setupBurgerMenu();
+
     const puzzles: Record<string, string> = await loadPuzzles();
 
     let gameString: string = puzzles[formatDate(new Date())];
@@ -64,6 +66,58 @@ async function gameMain(): Promise<void>
 
     game.gameCanvas.addEventListener('touchend', (e) => {
         game.onMouseUp();
+    });
+}
+
+async function setupBurgerMenu(): Promise<void>
+{
+    const burger = document.getElementById('burger')!;
+    const dropdown = document.getElementById('dropdown')!;
+
+    burger.addEventListener('click', (e) =>
+    {
+        e.stopPropagation();
+        dropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', (_) =>
+    {
+        dropdown.classList.remove('open');
+    });
+
+
+    let modalBackdrop: HTMLElement | null = null;
+
+    function openModal(e: Event, modal: HTMLElement) {
+        modalBackdrop = modal;
+        e.stopPropagation();
+        dropdown.classList.remove('open');
+        modalBackdrop.classList.add('open');
+    }
+
+    function closeModal() {
+        modalBackdrop?.classList.remove('open');
+        modalBackdrop = null;
+    }
+
+    document.querySelectorAll(".modal-close").forEach((modalClose) =>
+    {
+        modalClose.addEventListener('pointerdown', closeModal);
+    });
+
+    document.querySelectorAll(".modal-backdrop").forEach((item) =>
+    {
+        item.addEventListener('pointerdown', (e) => {
+            if (e.target === modalBackdrop) closeModal();
+        });
+    });
+
+
+    document.getElementById('previous-puzzles-button')!.addEventListener('pointerdown', (e: PointerEvent) => {
+        openModal(e, document.getElementById('previous-puzzles-modal')!);
+    });
+
+    document.getElementById('about-button')!.addEventListener('pointerdown', (e: PointerEvent) => {
+        openModal(e, document.getElementById('about-modal')!);
     });
 }
 
