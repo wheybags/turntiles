@@ -1,75 +1,189 @@
-import { assert, formatDate } from "../common/Common";
-import { SolutionBoard } from "../common/SolutionBoard";
-import { Game, GameState } from "./Game";
-import { renderBoard, renderTiles } from "./GameRender";
+import {assert, formatDate} from "../common/Common";
+import {SolutionBoard} from "../common/SolutionBoard";
+import {Game, GameState} from "./Game";
+import {renderBoard, renderTiles} from "./GameRender";
+
+declare global {
+    interface Window {
+        showPreviousPuzzlesDays: (puzzles: Record<string, string>, year: number, month: number) => void;
+        showPreviousPuzzlesMonths: (puzzles: Record<string, string>, year: number) => void;
+        showPreviousPuzzlesYears: (puzzles: Record<string, string>) => void;
+        loadPuzzleDay: (day: string) => void;
+
+        puzzles: Record<string, string>;
+        game?: Game;
+    }
+}
+
+const gameCanvas = document.getElementById("game_canvas") as HTMLCanvasElement;
+let dictionary: Set<string> = new Set();
 
 async function gameMain(): Promise<void>
 {
-    await setupBurgerMenu();
-
     const puzzles: Record<string, string> = await loadPuzzles();
+    window.puzzles = puzzles;
 
-    let gameString: string = puzzles[formatDate(new Date())];
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameStringFromUrl = urlParams.get('board');
-    if (gameStringFromUrl)
-        gameString = gameStringFromUrl;
+    dictionary = await loadDictionary()
 
-    const game: Game = new Game(document.getElementById("game_canvas") as HTMLCanvasElement,
-                                SolutionBoard.deserialise(gameString),
-                                await loadDictionary());
+    await setupBurgerMenu(puzzles);
 
-    // @ts-ignore
-    window.game = game;
-
-    let lastGameState: GameState = game.gameState;
+    let lastGameState: GameState = GameState.NotWon;
 
     function update(): void {
-        game.rescale();
+        const game = window.game;
+        if (game) {
+            game.rescale();
 
-        game.ctx.clearRect(0, 0, game.gameCanvas.width, game.gameCanvas.height);
-        renderBoard(game);
-        renderTiles(game);
+            game.ctx.clearRect(0, 0, game.gameCanvas.width, game.gameCanvas.height);
+            renderBoard(game);
+            renderTiles(game);
 
-        if (game.gameState !== lastGameState) {
-            if (game.gameState === GameState.WonConfirmed)
-                alert("YOU WIN");
-            else if (game.gameState === GameState.WonOriginal)
-                alert("YOU WIN - and you found a different solution!");
+            if (game.gameState !== lastGameState) {
+                if (game.gameState === GameState.WonConfirmed)
+                    alert("YOU WIN");
+                else if (game.gameState === GameState.WonOriginal)
+                    alert("YOU WIN - and you found a different solution!");
+            }
+
+            lastGameState = game.gameState;
         }
-
-        lastGameState = game.gameState;
 
         requestAnimationFrame(update);
     }
     update();
 
-    game.gameCanvas.addEventListener('mousemove', (e) => {
-        game.onMouseMove(e.offsetX * window.devicePixelRatio, e.offsetY * window.devicePixelRatio);
+    gameCanvas.addEventListener('mousemove', (e) => {
+        window.game?.onMouseMove(e.offsetX * window.devicePixelRatio, e.offsetY * window.devicePixelRatio);
     });
 
-    game.gameCanvas.addEventListener('touchmove', (e) => {
-        game.onMouseMove(e.touches[0].clientX * window.devicePixelRatio, e.touches[0].clientY * window.devicePixelRatio);
+    gameCanvas.addEventListener('touchmove', (e) => {
+        window.game?.onMouseMove(e.touches[0].clientX * window.devicePixelRatio, e.touches[0].clientY * window.devicePixelRatio);
     });
 
-    game.gameCanvas.addEventListener('mousedown', (e) => {
-        game.onMouseDown(e.offsetX * window.devicePixelRatio, e.offsetY * window.devicePixelRatio);
+    gameCanvas.addEventListener('mousedown', (e) => {
+        window.game?.onMouseDown(e.offsetX * window.devicePixelRatio, e.offsetY * window.devicePixelRatio);
     });
 
-    game.gameCanvas.addEventListener('touchstart', (e) => {
-        game.onMouseDown(e.touches[0].clientX * window.devicePixelRatio, e.touches[0].clientY * window.devicePixelRatio);
+    gameCanvas.addEventListener('touchstart', (e) => {
+        window.game?.onMouseDown(e.touches[0].clientX * window.devicePixelRatio, e.touches[0].clientY * window.devicePixelRatio);
     });
 
-    game.gameCanvas.addEventListener('mouseup', (e) => {
-        game.onMouseUp();
+    gameCanvas.addEventListener('mouseup', (e) => {
+        window.game?.onMouseUp();
     });
 
-    game.gameCanvas.addEventListener('touchend', (e) => {
-        game.onMouseUp();
+    gameCanvas.addEventListener('touchend', (e) => {
+        window.game?.onMouseUp();
     });
+
+    let gameId = formatDate(new Date());
+    let gameString: string = window.puzzles[gameId];
+    const urlParams = new URLSearchParams(window.location.search);
+    const gameStringFromUrl = urlParams.get('board');
+    if (gameStringFromUrl)
+    {
+        gameId = "url";
+        gameString = gameStringFromUrl;
+    }
+
+    loadGame(gameId, gameString);
 }
 
-async function setupBurgerMenu(): Promise<void>
+function loadGame(gameId: string, gameString: string): void
+{
+    window.game = new Game(gameCanvas, dictionary, gameId, gameString);
+    document.getElementById("title-extra")!.innerHTML = "";
+}
+
+function loadPuzzleDay(day: string): void
+{
+    loadGame(day, window.puzzles[day]);
+    closeModal();
+    document.getElementById("title-extra")!.innerHTML = day;
+}
+window.loadPuzzleDay = loadPuzzleDay;
+
+function showPreviousPuzzlesDays(puzzles: Record<string, string>, year: number, month: number)
+{
+    const content = document.getElementById("previous-puzzles-modal")!.querySelector(".modal-content")!;
+    const prefix = year+"-"+String(month).padStart(2, "0") + "-";
+
+    const days: Array<string> = [];
+    for (const key in puzzles)
+    {
+        if (key.startsWith(prefix))
+            days.push(key);
+    }
+
+    days.sort().reverse()
+
+    const sb: Array<string> = [];
+    sb.push(`<a href="#" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">Back</a><br>`);
+    for (const key of days)
+    {
+        sb.push(`<a href="#" onclick="loadPuzzleDay('${key}')">${key}</a>`)
+    }
+    content.innerHTML = sb.join("<br>");
+}
+window.showPreviousPuzzlesDays = showPreviousPuzzlesDays;
+
+function showPreviousPuzzlesMonths(puzzles: Record<string, string>, year: number)
+{
+    const content = document.getElementById("previous-puzzles-modal")!.querySelector(".modal-content")!;
+    const prefix = year+"-";
+
+    const monthsSet = new Set<number>();
+    for (const key in puzzles)
+    {
+        if (key.startsWith(prefix))
+        {
+            const month = parseInt(key.split('-')[1]);
+            monthsSet.add(month);
+        }
+    }
+
+    const months = Array.from(monthsSet).sort((a, b) => b-a);
+
+    const monthNames = ["-", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    const sb: Array<string> = [];
+    sb.push(`<a href="#" onclick="showPreviousPuzzlesYears(puzzles)">Back</a><br>`);
+    for (const month of months)
+    {
+        sb.push(`<a href="#" onclick="showPreviousPuzzlesDays(puzzles, ${year}, ${month})">${monthNames[month]}</a>`)
+    }
+    content.innerHTML = sb.join("<br>");
+}
+window.showPreviousPuzzlesMonths = showPreviousPuzzlesMonths;
+
+function showPreviousPuzzlesYears(puzzles: Record<string, string>)
+{
+    const content = document.getElementById("previous-puzzles-modal")!.querySelector(".modal-content")!;
+
+    const yearsSet = new Set<number>();
+    for (const key in puzzles)
+    {
+        const year = parseInt(key.split('-')[0]);
+        yearsSet.add(year);
+    }
+
+    const years = Array.from(yearsSet).sort((a, b) => b-a);
+
+    const sb: Array<string> = [];
+    for (const year of years)
+    {
+        sb.push(`<a href="#" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">${year}</a>`)
+    }
+    content.innerHTML = sb.join("<br>");
+}
+
+let modalBackdrop: HTMLElement | null = null;
+function closeModal() {
+    modalBackdrop?.classList.remove('open');
+    modalBackdrop = null;
+}
+
+async function setupBurgerMenu(puzzles: Record<string, string>): Promise<void>
 {
     const burger = document.getElementById('burger')!;
     const dropdown = document.getElementById('dropdown')!;
@@ -84,19 +198,11 @@ async function setupBurgerMenu(): Promise<void>
         dropdown.classList.remove('open');
     });
 
-
-    let modalBackdrop: HTMLElement | null = null;
-
     function openModal(e: Event, modal: HTMLElement) {
         modalBackdrop = modal;
         e.stopPropagation();
         dropdown.classList.remove('open');
         modalBackdrop.classList.add('open');
-    }
-
-    function closeModal() {
-        modalBackdrop?.classList.remove('open');
-        modalBackdrop = null;
     }
 
     document.querySelectorAll(".modal-close").forEach((modalClose) =>
@@ -113,6 +219,7 @@ async function setupBurgerMenu(): Promise<void>
 
 
     document.getElementById('previous-puzzles-button')!.addEventListener('pointerdown', (e: PointerEvent) => {
+        showPreviousPuzzlesYears(puzzles);
         openModal(e, document.getElementById('previous-puzzles-modal')!);
     });
 

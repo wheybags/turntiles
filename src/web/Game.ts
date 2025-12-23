@@ -1,6 +1,6 @@
-import type {SolutionBoard, SolutionBoardSlot} from "../common/SolutionBoard"
+import {SolutionBoard, type SolutionBoardSlot} from "../common/SolutionBoard"
 import {type BoardSlot, GameBoard, type Tile, TileStatus} from "./GameBoard"
-import {BlankLetter, parseDirection, shuffleArray} from "../common/Common.ts";
+import {BlankLetter, type Direction, parseDirection, shuffleArray} from "../common/Common.ts";
 
 export enum GameState
 {
@@ -9,10 +9,29 @@ export enum GameState
     WonOriginal,
 }
 
+interface SaveTile
+{
+    x: number,
+    y: number,
+    letter: string,
+    direction: Direction,
+    boardPos: [number, number] | null,
+}
+
+interface SaveData
+{
+    tiles: Array<SaveTile>,
+    gameString: string,
+    solved: boolean,
+}
+
 export class Game
 {
     public gameCanvas: HTMLCanvasElement;
     public ctx: CanvasRenderingContext2D;
+
+    public gameId: string;
+    public gameString: string;
 
     public solutionBoard: SolutionBoard;
     public board: GameBoard;
@@ -42,18 +61,24 @@ export class Game
     
     private dictionary: Set<string>;
 
-    public constructor(gameCanvas: HTMLCanvasElement, solutionBoard: SolutionBoard, dictionary: Set<string>)
+    public constructor(gameCanvas: HTMLCanvasElement, dictionary: Set<string>, gameId: string, gameString: string)
     {
+        this.gameId = gameId;
+        this.gameString = gameString;
         this.gameCanvas = gameCanvas;
         this.ctx = this.gameCanvas.getContext("2d") as CanvasRenderingContext2D;
-        this.solutionBoard = solutionBoard;
-        this.board = GameBoard.loadFromSolutionBoard(solutionBoard);
+        this.solutionBoard = SolutionBoard.deserialise(gameString);
+        this.board = GameBoard.loadFromSolutionBoard(this.solutionBoard);
         this.tiles = new Array<Tile>();
         this.dictionary = dictionary;
 
         this.rescale();
-        this.spawnTiles();
-        this.randomScatterTiles();
+
+        if (!this.tryLoadTilePositions())
+        {
+            this.spawnTiles();
+            this.randomScatterTiles();
+        }
     }
 
     private spawnTiles()
@@ -321,6 +346,56 @@ export class Game
         }
     }
 
+    private saveTilePositions()
+    {
+        const saveTiles: Array<SaveTile> = [];
+        for (const tile of this.tiles) {
+          const tileCopy: SaveTile = {
+              x: tile.x - this.boardX,
+              y: tile.y - this.boardY,
+              letter: tile.letter,
+              direction: tile.direction,
+              boardPos: tile.boardPos ? [tile.boardPos.pos.x, tile.boardPos.pos.y] : null,
+          };
+
+          saveTiles.push(tileCopy);
+        }
+
+        const saveData: SaveData = {
+            tiles: saveTiles,
+            gameString: this.gameString,
+            solved: this.gameState !== GameState.NotWon,
+        }
+
+        localStorage.setItem("saved_tiles_" + this.gameId, JSON.stringify(saveData));
+    }
+
+    private tryLoadTilePositions(): boolean
+    {
+        const dataString = localStorage.getItem("saved_tiles_" + this.gameId);
+        if (dataString == null)
+          return false;
+
+        const saveData: SaveData = JSON.parse(dataString);
+        if (saveData.gameString.replace(/ /g, "") !== this.gameString.replace(/ /g, ""))
+          return false;
+
+        this.tiles = [];
+        for (const saveTile of saveData.tiles)
+        {
+            this.tiles.push({
+                x: saveTile.x + this.boardX,
+                y: saveTile.y + this.boardY,
+                letter: saveTile.letter,
+                direction: saveTile.direction,
+                boardPos: saveTile.boardPos ? this.board.get(saveTile.boardPos[0], saveTile.boardPos[1]) : null,
+            })
+        }
+
+        this.confirmTiles();
+        return true;
+    }
+
 
     public onMouseMove(mouseX: number, mouseY: number): void
     {
@@ -394,6 +469,8 @@ export class Game
             this.selectedTile.boardPos = this.snappedBoardPos;
             if (this.snappedBoardPos)
                 this.snappedBoardPos.tile = this.selectedTile;
+
+            this.saveTilePositions();
         }
         this.selectedTile = null;
         this.snappedBoardPos = null;
