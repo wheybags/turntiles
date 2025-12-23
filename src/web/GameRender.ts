@@ -127,3 +127,84 @@ export function renderBoard(game: Game): void
         }
     }
 }
+
+let messageDiv: HTMLElement | null = null;
+let messageDivInnerHTML: string | null = null;
+let messageDivTop: string | null = null;
+let messageDivBackgroundColor: string | null = null;
+let messageDivFont: string | null = null;
+
+export function renderVictoryMessage(game: Game)
+{
+    if (game.gameState === GameState.NotWon)
+    {
+        if (messageDiv)
+        {
+            messageDiv.parentNode?.removeChild(messageDiv);
+            messageDiv = null;
+            messageDivInnerHTML = null;
+            messageDivTop = null;
+            messageDivBackgroundColor = null;
+            messageDivFont = null;
+        }
+        return
+    }
+
+    if (!messageDiv)
+    {
+        messageDiv = document.createElement("div");
+        messageDiv.id = "victory_message";
+        messageDiv.style.position = "absolute";
+        messageDiv.style.left = "0";
+        messageDiv.style.width = "100%";
+        messageDiv.style.zIndex = "10";
+        messageDiv.style.alignItems = "center";
+        messageDiv.style.justifyContent = "center";
+        messageDiv.style.color = "white";
+        messageDiv.style.display = "flex";
+        document.body.appendChild(messageDiv);
+    }
+
+    const areaTop = (game.boardY + game.boardH + game.TILE_SIZE) / window.devicePixelRatio;
+
+    let message =  `<span style="text-align: center; margin: 30px">YOU WIN!`;
+
+    let backgroundColor = BOARD_CONFIRMED_COLOR;
+    if (game.gameState === GameState.WonOriginal)
+    {
+        message += "<br>ALTERNATIVE SOLUTION";
+        backgroundColor = BOARD_VALIDWORD_WIN_COLOR;
+    }
+
+    // message += "<br>TIME 5M 23S";
+
+    message += `</span>`;
+
+    const top = areaTop + 'px';
+    const font = "bold " + (game.TILE_TEXT_SIZE/window.devicePixelRatio) + "px 'Libre Franklin', sans-serif";
+
+    if (messageDivInnerHTML !== message)
+    {
+        messageDivInnerHTML = message;
+        messageDiv.innerHTML = message;
+    }
+
+    if (messageDivTop !== top)
+    {
+        messageDivTop = top;
+        messageDiv.style.top = top;
+    }
+
+    if (messageDivBackgroundColor !== backgroundColor)
+    {
+        messageDivBackgroundColor = backgroundColor;
+        messageDiv.style.backgroundColor = backgroundColor;
+    }
+
+    if (messageDivFont !== font)
+    {
+        messageDivFont = font;
+        messageDiv.style.font = font;
+    }
+}
+

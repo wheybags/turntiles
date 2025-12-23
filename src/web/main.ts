@@ -1,7 +1,6 @@
 import {assert, formatDate} from "../common/Common";
-import {SolutionBoard} from "../common/SolutionBoard";
 import {Game, GameState} from "./Game";
-import {renderBoard, renderTiles} from "./GameRender";
+import {renderBoard, renderTiles, renderVictoryMessage} from "./GameRender";
 
 declare global {
     interface Window {
@@ -35,8 +34,6 @@ async function gameMain(): Promise<void>
 
     await setupBurgerMenu(puzzles);
 
-    let lastGameState: GameState = GameState.NotWon;
-
     function update(): void {
         const game = window.game;
         if (game) {
@@ -45,15 +42,7 @@ async function gameMain(): Promise<void>
             game.ctx.clearRect(0, 0, game.gameCanvas.width, game.gameCanvas.height);
             renderBoard(game);
             renderTiles(game);
-
-            if (game.gameState !== lastGameState) {
-                if (game.gameState === GameState.WonConfirmed)
-                    alert("YOU WIN");
-                else if (game.gameState === GameState.WonOriginal)
-                    alert("YOU WIN - and you found a different solution!");
-            }
-
-            lastGameState = game.gameState;
+            renderVictoryMessage(game);
         }
 
         requestAnimationFrame(update);
