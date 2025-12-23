@@ -383,13 +383,21 @@ export class Game
         this.tiles = [];
         for (const saveTile of saveData.tiles)
         {
-            this.tiles.push({
+            const tile: Tile = {
                 x: saveTile.x + this.boardX,
                 y: saveTile.y + this.boardY,
                 letter: saveTile.letter,
                 direction: saveTile.direction,
-                boardPos: saveTile.boardPos ? this.board.get(saveTile.boardPos[0], saveTile.boardPos[1]) : null,
-            })
+                boardPos: null,
+            }
+
+            if (saveTile.boardPos)
+            {
+                tile.boardPos = this.board.get(saveTile.boardPos[0], saveTile.boardPos[1]);
+                tile.boardPos.tile = tile;
+            }
+
+            this.tiles.push(tile);
         }
 
         this.confirmTiles();
