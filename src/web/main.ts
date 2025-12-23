@@ -20,7 +20,15 @@ let dictionary: Set<string> = new Set();
 
 async function gameMain(): Promise<void>
 {
-    const puzzles: Record<string, string> = await loadPuzzles();
+    const todayGameId = formatDate(new Date());
+
+    const puzzlesRaw: Record<string, string> = await loadPuzzles();
+    const puzzles: Record<string, string> = {};
+    for (const key in puzzlesRaw)
+    {
+        if (key <= todayGameId)
+            puzzles[key] = puzzlesRaw[key];
+    }
     window.puzzles = puzzles;
 
     dictionary = await loadDictionary()
@@ -76,7 +84,7 @@ async function gameMain(): Promise<void>
         window.game?.onMouseUp();
     });
 
-    let gameId = formatDate(new Date());
+    let gameId = todayGameId;
     let gameString: string = window.puzzles[gameId];
     const urlParams = new URLSearchParams(window.location.search);
     const gameStringFromUrl = urlParams.get('board');
