@@ -126,39 +126,57 @@ function showPreviousPuzzlesDays(puzzles: Record<string, string>, year: number, 
     days.sort().reverse()
 
     const sb: Array<string> = [];
-    sb.push(`<a href="#" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">Back</a><br>`);
+    sb.push(`<a class="previous-link" href="#" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">Back</a><br>`);
     for (const key of days)
     {
-        sb.push(`<a href="#" onclick="loadPuzzleDay('${key}')">${key}</a>`)
+        const solved = Game.tryLoadGame(key)?.solved || false;
+        const emoji: string = solved ? '🟩' : '🟥';
+        sb.push(`<a class="previous-link" href="#" onclick="loadPuzzleDay('${key}')">${emoji} ${key}</a>`)
     }
     content.innerHTML = sb.join("<br>");
 }
 window.showPreviousPuzzlesDays = showPreviousPuzzlesDays;
+
+interface Group
+{
+    completed: number;
+    total: number;
+}
 
 function showPreviousPuzzlesMonths(puzzles: Record<string, string>, year: number)
 {
     const content = document.getElementById("previous-puzzles-modal")!.querySelector(".modal-content")!;
     const prefix = year+"-";
 
-    const monthsSet = new Set<number>();
+    const monthsMap = new Map<number, Group>();
     for (const key in puzzles)
     {
         if (key.startsWith(prefix))
         {
+            const solved = Game.tryLoadGame(key)?.solved || false;
             const month = parseInt(key.split('-')[1]);
-            monthsSet.add(month);
+
+            if (!monthsMap.has(month))
+                monthsMap.set(month, {completed: 0, total: 0});
+
+            const monthData: Group = monthsMap.get(month)!;
+            monthData.total++;
+            if (solved)
+                monthData.completed++;
         }
     }
 
-    const months = Array.from(monthsSet).sort((a, b) => b-a);
+    const months = Array.from(monthsMap.keys()).sort((a, b) => b-a);
 
     const monthNames = ["-", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const sb: Array<string> = [];
-    sb.push(`<a href="#" onclick="showPreviousPuzzlesYears(puzzles)">Back</a><br>`);
+    sb.push(`<a class="previous-link" href="#" onclick="showPreviousPuzzlesYears(puzzles)">Back</a><br>`);
     for (const month of months)
     {
-        sb.push(`<a href="#" onclick="showPreviousPuzzlesDays(puzzles, ${year}, ${month})">${monthNames[month]}</a>`)
+        const monthData: Group = monthsMap.get(month)!;
+        const emoji: string = monthData.completed === monthData.total ? '🟩' : (monthData.completed > 0 ? '🟨' : '🟥');
+        sb.push(`<a class="previous-link" href="#" onclick="showPreviousPuzzlesDays(puzzles, ${year}, ${month})">${emoji} ${monthNames[month]}</a>`)
     }
     content.innerHTML = sb.join("<br>");
 }
@@ -168,19 +186,29 @@ function showPreviousPuzzlesYears(puzzles: Record<string, string>)
 {
     const content = document.getElementById("previous-puzzles-modal")!.querySelector(".modal-content")!;
 
-    const yearsSet = new Set<number>();
+    const yearsMap = new Map<number, Group>();
     for (const key in puzzles)
     {
+        const solved = Game.tryLoadGame(key)?.solved || false;
         const year = parseInt(key.split('-')[0]);
-        yearsSet.add(year);
+
+        if (!yearsMap.has(year))
+            yearsMap.set(year, {completed: 0, total: 0});
+
+        const yearData: Group = yearsMap.get(year)!;
+        yearData.total++;
+        if (solved)
+            yearData.completed++;
     }
 
-    const years = Array.from(yearsSet).sort((a, b) => b-a);
+    const years = Array.from(yearsMap.keys()).sort((a, b) => b-a);
 
     const sb: Array<string> = [];
     for (const year of years)
     {
-        sb.push(`<a href="#" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">${year}</a>`)
+        const yearData: Group = yearsMap.get(year)!;
+        const emoji: string = yearData.completed === yearData.total ? '🟩' : (yearData.completed > 0 ? '🟨' : '🟥');
+        sb.push(`<a class="previous-link" href="#" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">${emoji} ${year}</a>`)
     }
     content.innerHTML = sb.join("<br>");
 }

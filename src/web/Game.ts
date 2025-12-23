@@ -370,13 +370,21 @@ export class Game
         localStorage.setItem("saved_tiles_" + this.gameId, JSON.stringify(saveData));
     }
 
+    public static tryLoadGame(gameId: string): SaveData | null
+    {
+        const dataString = localStorage.getItem("saved_tiles_" + gameId);
+        if (dataString == null)
+            return null;
+
+        return JSON.parse(dataString);
+    }
+
     private tryLoadTilePositions(): boolean
     {
-        const dataString = localStorage.getItem("saved_tiles_" + this.gameId);
-        if (dataString == null)
-          return false;
+        const saveData: SaveData | null = Game.tryLoadGame(this.gameId);
+        if (saveData == null)
+            return false;
 
-        const saveData: SaveData = JSON.parse(dataString);
         if (saveData.gameString.replace(/ /g, "") !== this.gameString.replace(/ /g, ""))
           return false;
 
@@ -477,12 +485,11 @@ export class Game
             this.selectedTile.boardPos = this.snappedBoardPos;
             if (this.snappedBoardPos)
                 this.snappedBoardPos.tile = this.selectedTile;
-
-            this.saveTilePositions();
         }
         this.selectedTile = null;
         this.snappedBoardPos = null;
     
         this.confirmTiles();
+        this.saveTilePositions();
     }
 }
