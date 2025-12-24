@@ -140,8 +140,10 @@ function createElement(html: string): HTMLElement
     return parent.children.item(0)! as HTMLElement;
 }
 
-function formatMinutesSeconds(ms: number): string
+function formatMinutesSeconds(ms: number, nbsp: boolean): string
 {
+    const space = nbsp ? "&nbsp;" : " ";
+
     let secondsRemaining = Math.floor(ms / 1000);
 
     let result = "";
@@ -158,19 +160,63 @@ function formatMinutesSeconds(ms: number): string
         const minutes = Math.floor(secondsRemaining / 60);
         secondsRemaining -= minutes * 60;
         if (result.length)
-            result += "&nbsp;";
+            result += space;
         result += minutes + "M";
     }
 
     if (secondsRemaining > 0 || result.length === 0)
     {
         if (result.length)
-            result += "&nbsp;";
+            result += space;
         result += secondsRemaining + "S";
     }
 
     return result;
 }
+
+declare global {
+    interface Window {
+        onShareClicked: (shareLink: HTMLElement) => void;
+    }
+}
+
+async function onShareClicked(shareLink: HTMLElement): Promise<void>
+{
+    const time = formatMinutesSeconds(window.game!.getTimeSpentMs(), false);
+    const url = window.location.origin + window.location.pathname + "?day=" + window.game!.gameId;
+    const message = `I finished today's Orientile in ${time}! ${url}`;
+    await navigator.clipboard.writeText(message);
+
+    const toast = createElement(`
+        <div
+            style="
+                position: absolute;
+                left: ${shareLink.getBoundingClientRect().left}px;
+                top: ${shareLink.getBoundingClientRect().top}px;
+                z-index: 20;
+                background: white;
+                padding: 3px;
+                border-radius: 5px;
+                color: black;
+                text-align: center;"
+        >
+            COPIED TO<br>CLIPBOARD
+        </div>
+    `);
+
+    toast.className = "fadeOut";
+
+    toast.addEventListener('animationend', () => {
+        toast.remove();
+    });
+
+    toast.addEventListener('animationcancel', () => {
+        toast.remove();
+    });
+
+    document.body.appendChild(toast);
+}
+window.onShareClicked = onShareClicked;
 
 export function renderVictoryMessage(game: Game): void
 {
@@ -182,7 +228,7 @@ export function renderVictoryMessage(game: Game): void
         return;
     }
 
-    const areaTop = (game.boardY + game.boardH + game.TILE_SIZE) / window.devicePixelRatio;
+    const areaTop: number = (game.boardY + game.boardH + game.TILE_SIZE) / window.devicePixelRatio;
 
     let altMessage: string | null = null;
     let backgroundColor = BOARD_CONFIRMED_COLOR;
@@ -191,6 +237,10 @@ export function renderVictoryMessage(game: Game): void
         altMessage = "<br>ALTERNATIVE SOLUTION";
         backgroundColor = BOARD_VALIDWORD_WIN_COLOR;
     }
+
+    let share = "";
+    if (game.gameId != 'url')
+        share = `&nbsp;-&nbsp;<a href="#" style="color: white" onclick="onShareClicked(this)">SHARE</a>`;
 
     let messageDivString = `
     <div style="position: absolute; 
@@ -210,7 +260,7 @@ export function renderVictoryMessage(game: Game): void
             </span>
             <span style="font: bold ${(game.TILE_TEXT_SIZE/window.devicePixelRatio)/2}px 'Libre Franklin', sans-serif;"">
                 ${altMessage || ""}
-                <br>TIME&nbsp;${formatMinutesSeconds(game.getTimeSpentMs())}
+                <br>TIME&nbsp;${formatMinutesSeconds(game.getTimeSpentMs(), true)}${share}
             </span>
         </span>
     </div>`;

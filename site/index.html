@@ -166,6 +166,16 @@
             color: blue;
         }
 
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .fadeOut {
+            animation-name: fadeOut;
+            animation-duration: 3s;
+        }
+
         /* libre-franklin-regular - latin */
         @font-face {
             font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
