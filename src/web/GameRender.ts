@@ -1,5 +1,6 @@
 import {TileStatus} from "./GameBoard.ts";
 import {Game, GameState} from "./Game.ts";
+import { assert } from "../common/Common.ts";
 
 const BOARD_COLOR = "#aaaaa3";
 const BOARD_SLOT_COLOR = "#efefe6";
@@ -129,82 +130,94 @@ export function renderBoard(game: Game): void
 }
 
 let messageDiv: HTMLElement | null = null;
-let messageDivInnerHTML: string | null = null;
-let messageDivTop: string | null = null;
-let messageDivBackgroundColor: string | null = null;
-let messageDivFont: string | null = null;
+let messageDivLastString: string | null = null;
 
-export function renderVictoryMessage(game: Game)
+function createElement(html: string): HTMLElement
+{
+    const parent = document.createElement("div");
+    parent.innerHTML = html;
+    assert(parent.children.length === 1);
+    return parent.children.item(0)! as HTMLElement;
+}
+
+function formatMinutesSeconds(ms: number): string
+{
+    let secondsRemaining = Math.floor(ms / 1000);
+
+    let result = "";
+
+    if (secondsRemaining > 60*60)
+    {
+        const hours = Math.floor(secondsRemaining / (60*60));
+        secondsRemaining -= hours * (60*60);
+        result += hours + "H";
+    }
+
+    if (secondsRemaining > 60)
+    {
+        const minutes = Math.floor(secondsRemaining / 60);
+        secondsRemaining -= minutes * 60;
+        if (result.length)
+            result += " ";
+        result += minutes + "M";
+    }
+
+    if (secondsRemaining > 0 || result.length === 0)
+    {
+        if (result.length)
+            result += " ";
+        result += secondsRemaining + "S";
+    }
+
+    return result;
+}
+
+export function renderVictoryMessage(game: Game): void
 {
     if (game.gameState === GameState.NotWon)
     {
-        if (messageDiv)
-        {
-            messageDiv.parentNode?.removeChild(messageDiv);
-            messageDiv = null;
-            messageDivInnerHTML = null;
-            messageDivTop = null;
-            messageDivBackgroundColor = null;
-            messageDivFont = null;
-        }
-        return
-    }
-
-    if (!messageDiv)
-    {
-        messageDiv = document.createElement("div");
-        messageDiv.id = "victory_message";
-        messageDiv.style.position = "absolute";
-        messageDiv.style.left = "0";
-        messageDiv.style.width = "100%";
-        messageDiv.style.zIndex = "10";
-        messageDiv.style.alignItems = "center";
-        messageDiv.style.justifyContent = "center";
-        messageDiv.style.color = "white";
-        messageDiv.style.display = "flex";
-        document.body.appendChild(messageDiv);
+        messageDiv?.parentNode?.removeChild(messageDiv);
+        messageDiv = null;
+        messageDivLastString = null;
+        return;
     }
 
     const areaTop = (game.boardY + game.boardH + game.TILE_SIZE) / window.devicePixelRatio;
 
-    let message =  `<span style="text-align: center; margin: 30px">YOU WIN!`;
-
+    let altMessage: string | null = null;
     let backgroundColor = BOARD_CONFIRMED_COLOR;
     if (game.gameState === GameState.WonOriginal)
     {
-        message += "<br>ALTERNATIVE SOLUTION";
+        altMessage = "<br>ALTERNATIVE SOLUTION";
         backgroundColor = BOARD_VALIDWORD_WIN_COLOR;
     }
 
-    // message += "<br>TIME 5M 23S";
+    let messageDivString = `
+    <div style="position: absolute; 
+                left: 0; 
+                background-color: ${backgroundColor};
+                width: 100%; 
+                z-index: 10;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                display: flex;
+                top: ${areaTop}px;
+                font: bold ${game.TILE_TEXT_SIZE/window.devicePixelRatio}px 'Libre Franklin', sans-serif;"
+    >
+        <span style="text-align: center; margin: 30px">
+            YOU WIN!
+            ${altMessage || ""}
+            <br>TIME ${formatMinutesSeconds(game.getTimeSpentMs())}
+        </span>
+    </div>`;
 
-    message += `</span>`;
-
-    const top = areaTop + 'px';
-    const font = "bold " + (game.TILE_TEXT_SIZE/window.devicePixelRatio) + "px 'Libre Franklin', sans-serif";
-
-    if (messageDivInnerHTML !== message)
+    if (messageDivString !== messageDivLastString)
     {
-        messageDivInnerHTML = message;
-        messageDiv.innerHTML = message;
-    }
-
-    if (messageDivTop !== top)
-    {
-        messageDivTop = top;
-        messageDiv.style.top = top;
-    }
-
-    if (messageDivBackgroundColor !== backgroundColor)
-    {
-        messageDivBackgroundColor = backgroundColor;
-        messageDiv.style.backgroundColor = backgroundColor;
-    }
-
-    if (messageDivFont !== font)
-    {
-        messageDivFont = font;
-        messageDiv.style.font = font;
+        messageDiv?.parentNode?.removeChild(messageDiv);
+        messageDiv = createElement(messageDivString);
+        messageDivLastString = messageDivString;
+        document.body.appendChild(messageDiv);
     }
 }
 

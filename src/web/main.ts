@@ -73,17 +73,29 @@ async function gameMain(): Promise<void>
         window.game?.onMouseUp();
     });
 
-    let gameId = todayGameId;
-    let gameString: string = window.puzzles[gameId];
-    const urlParams = new URLSearchParams(window.location.search);
-    const gameStringFromUrl = urlParams.get('board');
-    if (gameStringFromUrl)
+    document.addEventListener('visibilitychange', (e) =>
     {
-        gameId = "url";
-        gameString = gameStringFromUrl;
-    }
+       window.game?.setTimerBlock(document.visibilityState === "hidden");
+    });
 
-    loadGame(gameId, gameString);
+    const urlParams = new URLSearchParams(window.location.search);
+    const dayFromUrl = urlParams.get('day');
+    if (dayFromUrl)
+    {
+        loadPuzzleDay(dayFromUrl);
+        window.history.replaceState({}, "", window.location.href.split('?')[0]);
+    }
+    else
+    {
+        let gameId = todayGameId;
+        let gameString: string = window.puzzles[gameId];
+        const gameStringFromUrl = urlParams.get('board');
+        if (gameStringFromUrl) {
+            gameId = "url";
+            gameString = gameStringFromUrl;
+        }
+        loadGame(gameId, gameString);
+    }
 }
 
 function loadGame(gameId: string, gameString: string): void

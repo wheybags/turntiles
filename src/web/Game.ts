@@ -23,6 +23,7 @@ interface SaveData
     tiles: Array<SaveTile>,
     gameString: string,
     solved: boolean,
+    timeSpentMs?: number,
 }
 
 export class Game
@@ -61,6 +62,10 @@ export class Game
     
     private dictionary: Set<string>;
 
+    private thisSessionStartTime: Date | null = null;
+    private timerIsBlocked: boolean = false;
+    private timeSpentMs: number = 0;
+
     public constructor(gameCanvas: HTMLCanvasElement, dictionary: Set<string>, gameId: string, gameString: string)
     {
         this.gameId = gameId;
@@ -78,6 +83,38 @@ export class Game
         {
             this.spawnTiles();
             this.randomScatterTiles();
+        }
+
+        this.confirmTiles();
+    }
+
+    public getTimeSpentMs(): number
+    {
+        let ms = this.timeSpentMs;
+        if (this.thisSessionStartTime)
+            ms += (new Date().getTime() - this.thisSessionStartTime.getTime());
+        return ms;
+    }
+
+    public setTimerBlock(val: boolean): void
+    {
+        this.timerIsBlocked = val;
+        this.handleTimer();
+    }
+
+    private handleTimer(): void
+    {
+        const timerShouldRun: boolean = this.gameState === GameState.NotWon && !this.timerIsBlocked;
+        const timerIsRunning: boolean = !!this.thisSessionStartTime;
+
+        if (timerShouldRun && !timerIsRunning)
+        {
+            this.thisSessionStartTime = new Date();
+        }
+        else if (!timerShouldRun && timerIsRunning)
+        {
+            this.timeSpentMs = this.getTimeSpentMs();
+            this.thisSessionStartTime = null;
         }
     }
 
@@ -177,6 +214,7 @@ export class Game
         }
     }
 
+
     public confirmTiles()
     {
         const self = this;
@@ -263,6 +301,8 @@ export class Game
                 }
             }
         }
+
+        this.handleTimer();
     }
         
     public rescale(): void
@@ -365,6 +405,7 @@ export class Game
             tiles: saveTiles,
             gameString: this.gameString,
             solved: this.gameState !== GameState.NotWon,
+            timeSpentMs: this.getTimeSpentMs(),
         }
 
         localStorage.setItem("saved_tiles_" + this.gameId, JSON.stringify(saveData));
@@ -408,7 +449,9 @@ export class Game
             this.tiles.push(tile);
         }
 
-        this.confirmTiles();
+        if (saveData.timeSpentMs !== undefined)
+            this.timeSpentMs = saveData.timeSpentMs;
+
         return true;
     }
 
