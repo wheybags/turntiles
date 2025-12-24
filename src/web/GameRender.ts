@@ -158,14 +158,14 @@ function formatMinutesSeconds(ms: number): string
         const minutes = Math.floor(secondsRemaining / 60);
         secondsRemaining -= minutes * 60;
         if (result.length)
-            result += " ";
+            result += "&nbsp;";
         result += minutes + "M";
     }
 
     if (secondsRemaining > 0 || result.length === 0)
     {
         if (result.length)
-            result += " ";
+            result += "&nbsp;";
         result += secondsRemaining + "S";
     }
 
@@ -202,13 +202,16 @@ export function renderVictoryMessage(game: Game): void
                 justify-content: center;
                 color: white;
                 display: flex;
-                top: ${areaTop}px;
-                font: bold ${game.TILE_TEXT_SIZE/window.devicePixelRatio}px 'Libre Franklin', sans-serif;"
+                top: ${areaTop}px;"
     >
         <span style="text-align: center; margin: 30px">
-            YOU WIN!
-            ${altMessage || ""}
-            <br>TIME ${formatMinutesSeconds(game.getTimeSpentMs())}
+            <span style="font: bold ${game.TILE_TEXT_SIZE/window.devicePixelRatio}px 'Libre Franklin', sans-serif;">
+                YOU WIN!
+            </span>
+            <span style="font: bold ${(game.TILE_TEXT_SIZE/window.devicePixelRatio)/2}px 'Libre Franklin', sans-serif;"">
+                ${altMessage || ""}
+                <br>TIME&nbsp;${formatMinutesSeconds(game.getTimeSpentMs())}
+            </span>
         </span>
     </div>`;
 
