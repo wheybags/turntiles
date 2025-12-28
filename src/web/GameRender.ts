@@ -184,7 +184,7 @@ async function onShareClicked(shareLink: HTMLElement): Promise<void>
 {
     const time = formatMinutesSeconds(window.game!.getTimeSpentMs(), false);
     const url = window.location.origin + window.location.pathname + "?day=" + window.game!.gameId;
-    const message = `I finished today's Orientile in ${time}! ${url}`;
+    const message = `I finished Turntile in ${time}! ${url}`;
     await navigator.clipboard.writeText(message);
 
     const toast = createElement(`
