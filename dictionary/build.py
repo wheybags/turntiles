@@ -75,6 +75,11 @@ with open('naughty.txt', 'r') as file:
     for line in file:
         naughty.add(line.strip())
 
+regional = set([])
+with open('us_uk_diff.txt', 'r') as file:
+    for line in file:
+        regional.add(line.strip())
+
 words_with_freq = [(x, freq_map[x]) for x in words if x in freq_map]
 
 words_with_freq.sort(key=lambda x: x[1], reverse=True)
@@ -83,7 +88,7 @@ with open('dictionary_for_generation.txt', 'wb') as file:
     count = math.floor(len(words_with_freq) * 0.25)
     for i in range(count):
         word = words_with_freq[i][0]
-        if word in naughty or len(word) <= 3:
+        if word in naughty or word in regional or len(word) <= 3:
             continue
         file.write(word.encode('utf-8'))
         if i != count - 1:
