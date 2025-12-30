@@ -2632,8 +2632,6 @@ vaporized
 vaporizes
 vender
 venders
-vendor
-vendors
 victimise
 victimised
 victimises
