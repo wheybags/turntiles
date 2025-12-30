@@ -41,8 +41,7 @@
 
         #title-extra {
             position: absolute;
-            left: 100%;
-            margin-left: 8px;
+            left: 20px;
             font-size: 12px;
             font-weight: 400;
             opacity: 0.6;
@@ -51,9 +50,34 @@
             white-space: nowrap;
         }
 
+        #help-button {
+            position: absolute;
+            right: 64px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: black;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        #help-button-inner {
+            position: absolute;
+            left: calc((24px - 18px)/2);
+            top: calc((24px - 18px)/2);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: white;
+            user-select: none;
+        }
+
         #burger {
             position: absolute;
-            right: 16px;
+            right: 24px;
             width: 24px;
             height: 18px;
             display: flex;
@@ -115,7 +139,7 @@
 
         .modal {
             width: min(90vw, 320px);
-            max-height: 80vh;                 /* limit modal height */
+            max-height: 90vh;                 /* limit modal height */
             background: white;
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -198,10 +222,17 @@
 <body>
 
 <div id="header">
+    <span id="title-extra"></span>
+
     <div id="header-title">
         <span id="title-main">TURNTILES</span>
-        <span id="title-extra"></span>
+
     </div>
+
+    <div id="help-button">
+        <div id="help-button-inner">?</div>
+    </div>
+
 
     <div id="burger">
         <span></span>
@@ -209,6 +240,7 @@
         <span></span>
 
         <div id="dropdown">
+            <div class="menu-item" id="howto-button">How to play</div>
             <div class="menu-item" id="previous-puzzles-button">Previous puzzles</div>
             <div class="menu-item" id="about-button">About</div>
         </div>
@@ -238,6 +270,24 @@
         <div class="modal-content">
             Made with <img class="tile-img" src="tile.svg"/> by <a href="https://wheybags.com">Tom Mason</a>.<br>
             Dedicated to his parents, Luly and Jonathan.
+        </div>
+    </div>
+</div>
+
+<div id="howto-modal" class="modal-backdrop">
+    <div class="modal" style="width: auto;">
+        <div class="modal-header">
+            <span>How to play</span>
+            <button class="modal-close">✕</button>
+        </div>
+
+        <div class="modal-content" style="text-align: center;">
+            Place tiles on the grid to make words.<br>Follow the arrows.<br><br>
+            <img style="width: 10em;" src="example_1.gif"/><br><br>
+            Some tiles form the end of multiple words:<br>e.g. STS in GUESTS and ARTISTS.<br><br>
+            <img style="width: 10em;" src="example_2.png"/><br><br>
+            There's a new puzzle every day.<br>
+            Enjoy!<br><br>
         </div>
     </div>
 </div>

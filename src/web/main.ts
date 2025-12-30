@@ -235,9 +235,9 @@ async function setupBurgerMenu(puzzles: Record<string, string>): Promise<void>
         dropdown.classList.remove('open');
     });
 
-    function openModal(e: Event, modal: HTMLElement) {
+    function openModal(e: Event | null, modal: HTMLElement) {
         modalBackdrop = modal;
-        e.stopPropagation();
+        e?.stopPropagation();
         dropdown.classList.remove('open');
         modalBackdrop.classList.add('open');
     }
@@ -263,6 +263,20 @@ async function setupBurgerMenu(puzzles: Record<string, string>): Promise<void>
     document.getElementById('about-button')!.addEventListener('pointerdown', (e: PointerEvent) => {
         openModal(e, document.getElementById('about-modal')!);
     });
+
+    document.getElementById('howto-button')!.addEventListener('pointerdown', (e: PointerEvent) => {
+        openModal(e, document.getElementById('howto-modal')!);
+    })
+
+    document.getElementById('help-button')!.addEventListener('pointerdown', (e: PointerEvent) => {
+        openModal(e, document.getElementById('howto-modal')!);
+    })
+
+    if (localStorage.getItem("HOWTO_SHOWN") == null)
+    {
+        openModal(null, document.getElementById('howto-modal')!);
+        localStorage.setItem("HOWTO_SHOWN", "true");
+    }
 }
 
 async function loadDictionary(): Promise<Set<string>> {
