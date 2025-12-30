@@ -88,6 +88,20 @@ export class Game
         this.confirmTiles();
     }
 
+    public resetTiles(): void
+    {
+        for (const tile of this.tiles)
+        {
+            if (tile.boardPos)
+            {
+                tile.boardPos.tile = null;
+                tile.boardPos = null;
+            }
+        }
+
+        this.randomScatterTiles();
+    }
+
     public getTimeSpentMs(): number
     {
         let ms = this.timeSpentMs;

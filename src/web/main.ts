@@ -260,6 +260,10 @@ async function setupBurgerMenu(puzzles: Record<string, string>): Promise<void>
         openModal(e, document.getElementById('previous-puzzles-modal')!);
     });
 
+    document.getElementById('reset-tiles-button')!.addEventListener('pointerdown', (e) => {
+        window.game?.resetTiles();
+    })
+
     document.getElementById('about-button')!.addEventListener('pointerdown', (e: PointerEvent) => {
         openModal(e, document.getElementById('about-modal')!);
     });
