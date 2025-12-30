@@ -87,14 +87,26 @@ async function gameMain(): Promise<void>
     }
     else
     {
-        let gameId = todayGameId;
-        let gameString: string = window.puzzles[gameId];
         const gameStringFromUrl = urlParams.get('board');
         if (gameStringFromUrl) {
-            gameId = "url";
-            gameString = gameStringFromUrl;
+            loadGame("url", gameStringFromUrl);
         }
-        loadGame(gameId, gameString);
+        else
+        {
+            let todayGameString: string | undefined = window.puzzles[todayGameId];
+            if (todayGameString)
+            {
+                loadGame(todayGameId, todayGameString)
+            }
+            else
+            {
+                // if we don't have a puzzle for today for some reason
+                // (probably because it's not prod), load the most recent day
+                const dayKeys = Object.keys(window.puzzles);
+                dayKeys.sort();
+                loadPuzzleDay(dayKeys[dayKeys.length - 1]);
+            }
+        }
     }
 }
 
