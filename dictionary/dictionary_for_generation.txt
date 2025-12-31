@@ -4261,6 +4261,7 @@ elegant
 peasant
 twins
 purchase
+jail
 spots
 expensive
 sprung
@@ -8433,7 +8434,6 @@ shove
 homestead
 groans
 doth
-gypsy
 reproached
 remnant
 dodged
@@ -10892,7 +10892,6 @@ whereof
 kinsman
 velocity
 complacency
-coon
 doze
 suitor
 unfriendly
@@ -15789,7 +15788,6 @@ hospitably
 tucking
 wrecks
 dolphin
-gypsies
 thrift
 wert
 banana
@@ -19288,7 +19286,6 @@ empires
 examiner
 faun
 gills
-kaffir
 relenting
 scarcity
 sloppy
@@ -20604,7 +20601,6 @@ mignon
 outnumbered
 pedlar
 perforated
-redskins
 reminiscently
 retrospective
 rubs
@@ -21223,7 +21219,6 @@ overpower
 perfections
 persecute
 reconstructed
-redskin
 rhododendrons
 silliness
 tidying
@@ -21265,7 +21260,6 @@ fashioning
 hurries
 incantation
 ingrained
-kaffirs
 kine
 lapsing
 magdalene
@@ -23067,7 +23061,6 @@ emanation
 extorted
 forefeet
 heretics
-kafir
 mewing
 minster
 overshoes
@@ -23863,7 +23856,6 @@ mullen
 proclivities
 sables
 scimitar
-shylock
 sixpenny
 spurting
 suffocate
@@ -24158,6 +24150,7 @@ staking
 surmounting
 synthetic
 unburdened
+vendors
 vigilantes
 afflictions
 ahem
@@ -24696,6 +24689,7 @@ steamy
 uncompromisingly
 unrivalled
 vats
+vendor
 assailing
 bangle
 camper
