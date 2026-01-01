@@ -1287,6 +1287,7 @@ itemises
 itemize
 itemized
 itemizes
+ither
 jeopardise
 jeopardised
 jeopardises
