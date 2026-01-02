@@ -58,7 +58,7 @@ export function assert(val: any): void
 
 export function formatDate(date: Date): string
 {
-    return date.getFullYear().toString() + "-" + (date.getMonth()+1).toString() + "-" + date.getDate();
+    return date.getFullYear().toString() + "-" + (date.getMonth()+1).toString().padStart(2, "0") + "-" + date.getDate().toString().padStart(2, "0");
 }
 
 // https://stackoverflow.com/a/12646864
