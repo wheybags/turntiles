@@ -1,6 +1,7 @@
 import {assert, formatDate} from "../common/Common";
 import {Game, GameState} from "./Game";
 import {renderBoard, renderTiles, renderVictoryMessage} from "./GameRender";
+import {applyRoundRectPolyfill} from './PolyfillRoundRect'
 
 declare global {
     interface Window {
@@ -19,6 +20,7 @@ let dictionary: Set<string> = new Set();
 
 async function gameMain(): Promise<void>
 {
+    applyRoundRectPolyfill();
     const todayGameId = formatDate(new Date());
 
     const puzzlesRaw: Record<string, string> = await loadPuzzles();
@@ -55,6 +57,7 @@ async function gameMain(): Promise<void>
 
     gameCanvas.addEventListener('touchmove', (e) => {
         window.game?.onMouseMove(e.touches[0].clientX * window.devicePixelRatio, e.touches[0].clientY * window.devicePixelRatio);
+        e.preventDefault();
     });
 
     gameCanvas.addEventListener('mousedown', (e) => {
