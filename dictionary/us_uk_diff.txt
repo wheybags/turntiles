@@ -444,6 +444,8 @@ circularises
 circularize
 circularized
 circularizes
+cissies
+cissy
 civilisation
 civilisations
 civilise
@@ -548,6 +550,7 @@ conveyorises
 conveyorize
 conveyorized
 conveyorizes
+cosey
 cosier
 cosies
 cosiest
@@ -634,6 +637,7 @@ diarrhoeal
 diarrhoeic
 digitalises
 digitalizes
+dike
 disclike
 discography
 discolor
@@ -697,6 +701,7 @@ draughtsmanly
 draughtsmanship
 draughtswoman
 draughty
+dyke
 ebonise
 ebonised
 ebonises
@@ -1010,6 +1015,12 @@ galvanises
 galvanize
 galvanized
 galvanizes
+gaol
+gaoled
+gaoler
+gaolers
+gaoling
+gaols
 generalisability
 generalisable
 generalisation
@@ -1103,6 +1114,7 @@ harmonize
 harmonized
 harmonizes
 harmonizing
+hart
 hectoliter
 hectolitre
 hectometer
@@ -1448,6 +1460,9 @@ magnetises
 magnetize
 magnetized
 magnetizes
+mam
+mammies
+mammy
 maneuver
 maneuvered
 maneuvering
@@ -1462,6 +1477,8 @@ marbleises
 marbleize
 marbleized
 marbleizes
+marshal
+marshall
 marvellous
 marvellously
 marvelous
@@ -1592,6 +1609,12 @@ misbehavior
 misbehaviors
 misbehaviour
 misbehaviours
+miter
+mitered
+miters
+mitre
+mitred
+mitres
 mobilise
 mobilised
 mobilises
@@ -1640,6 +1663,10 @@ molt
 molted
 molting
 molts
+mom
+mommies
+mommy
+moms
 monetise
 monetised
 monetises
@@ -1685,6 +1712,8 @@ multicolor
 multicolored
 multicolour
 multicoloured
+mum
+mums
 musicalise
 musicalised
 musicalises
@@ -1900,9 +1929,13 @@ pasteurizes
 patronise
 patronised
 patronises
+patronising
+patronisingly
 patronize
 patronized
 patronizes
+patronizing
+patronizingly
 pedagog
 pedagogs
 pedagogue
@@ -2286,6 +2319,7 @@ signalled
 signalling
 signals
 sises
+sissy
 sizes
 skeletonise
 skeletonised
@@ -2351,6 +2385,10 @@ specialized
 specializes
 specialties
 specialty
+specter
+specters
+spectre
+spectres
 spelled
 spelt
 spoilt
@@ -2633,6 +2671,8 @@ vaporized
 vaporizes
 vender
 venders
+veranda
+verandah
 victimise
 victimised
 victimises
@@ -2700,6 +2740,8 @@ vulgarized
 vulgarizes
 vyce
 vyces
+waggon
+waggons
 watercolor
 watercolors
 watercolour

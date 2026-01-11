@@ -80,6 +80,11 @@ with open('us_uk_diff.txt', 'r') as file:
     for line in file:
         regional.add(line.strip())
 
+manual_remove = set([])
+with open('manual_remove.txt', 'r') as file:
+    for line in file:
+        regional.add(line.strip())
+
 words_with_freq = [(x, freq_map[x]) for x in words if x in freq_map]
 
 words_with_freq.sort(key=lambda x: x[1], reverse=True)
