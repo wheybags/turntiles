@@ -100,6 +100,7 @@ export class Game
         }
 
         this.randomScatterTiles();
+        this.confirmTiles();
     }
 
     public getTimeSpentMs(): number
