@@ -1,6 +1,6 @@
 import {TileStatus} from "./GameBoard.ts";
 import {Game, GameState} from "./Game.ts";
-import { assert } from "../common/Common.ts";
+import {assert, formatDate} from "../common/Common.ts";
 
 const BOARD_COLOR = "#aaaaa3";
 const BOARD_SLOT_COLOR = "#efefe6";
@@ -140,35 +140,66 @@ function createElement(html: string): HTMLElement
     return parent.children.item(0)! as HTMLElement;
 }
 
-function formatMinutesSeconds(ms: number, nbsp: boolean): string
+interface HoursMinutesSeconds
 {
-    const space = nbsp ? "&nbsp;" : " ";
+    hours: number;
+    minutes: number;
+    seconds: number;
+}
 
+function msToHoursMinutesSeconds(ms: number): HoursMinutesSeconds
+{
     let secondsRemaining = Math.floor(ms / 1000);
 
-    let result = "";
+    let result: HoursMinutesSeconds =
+    {
+        hours: 0,
+        minutes: 0,
+        seconds: 0,
+    };
 
     if (secondsRemaining > 60*60)
     {
         const hours = Math.floor(secondsRemaining / (60*60));
         secondsRemaining -= hours * (60*60);
-        result += hours + "H";
+        result.hours = hours;
     }
 
     if (secondsRemaining > 60)
     {
         const minutes = Math.floor(secondsRemaining / 60);
         secondsRemaining -= minutes * 60;
-        if (result.length)
-            result += space;
-        result += minutes + "M";
+        result.minutes = minutes;
     }
 
-    if (secondsRemaining > 0 || result.length === 0)
+    result.seconds = secondsRemaining;
+
+    return result;
+}
+
+function formatMinutesSeconds(ms: number, nbsp: boolean): string
+{
+    const space = nbsp ? "&nbsp;" : " ";
+
+    const time: HoursMinutesSeconds = msToHoursMinutesSeconds(ms);
+
+    let result = "";
+
+    if (time.hours > 0)
+        result += time.hours + "H";
+
+    if (time.minutes > 0)
     {
         if (result.length)
             result += space;
-        result += secondsRemaining + "S";
+        result += time.minutes + "M";
+    }
+
+    if (time.seconds > 0 || result.length === 0)
+    {
+        if (result.length)
+            result += space;
+        result += time.seconds + "S";
     }
 
     return result;
@@ -242,6 +273,38 @@ export function renderVictoryMessage(game: Game): void
     if (game.gameId != 'url')
         share = `&nbsp;-&nbsp;<a href="#" style="color: white" onclick="onShareClicked(this)">SHARE</a>`;
 
+    const todayGameId = formatDate(new Date());
+
+    let newPuzzleTimeStr: string = "";
+    if (game.gameId == todayGameId)
+    {
+        const newPuzzleTime = new Date();
+        newPuzzleTime.setHours(0, 0, 0, 0);
+        newPuzzleTime.setDate(newPuzzleTime.getDate() + 1);
+        newPuzzleTime.setHours(0, 0, 0, 0); // paranoia
+
+        const timeBeforeNewPuzzleMs: number = newPuzzleTime.getTime() - new Date().getTime();
+
+        if (timeBeforeNewPuzzleMs > 0)
+        {
+            const timeBeforeNewPuzzle: HoursMinutesSeconds = msToHoursMinutesSeconds(timeBeforeNewPuzzleMs);
+
+            newPuzzleTimeStr += "NEW PUZZLE IN ";
+
+            if (timeBeforeNewPuzzle.hours != 0)
+                newPuzzleTimeStr += timeBeforeNewPuzzle.hours + "H ";
+
+            if (timeBeforeNewPuzzle.hours != 0 || timeBeforeNewPuzzle.minutes != 0)
+                newPuzzleTimeStr += timeBeforeNewPuzzle.minutes + "M ";
+
+            const secondsString: string = String(timeBeforeNewPuzzle.seconds).padStart(2, '0');
+
+            for (const char of secondsString)
+                newPuzzleTimeStr += `<span style="width: 0.7em; display: inline-block;">${char}</span>`;
+            newPuzzleTimeStr += "S";
+        }
+    }
+
     let messageDivString = `
     <div style="position: absolute; 
                 left: 0; 
@@ -260,7 +323,8 @@ export function renderVictoryMessage(game: Game): void
             </span>
             <span style="font: bold ${(game.TILE_TEXT_SIZE/window.devicePixelRatio)/2}px 'Libre Franklin', sans-serif;"">
                 ${altMessage || ""}
-                <br>TIME&nbsp;${formatMinutesSeconds(game.getTimeSpentMs(), true)}${share}
+                <br>TIME&nbsp;${formatMinutesSeconds(game.getTimeSpentMs(), true)}${share}<br>
+                ${newPuzzleTimeStr}
             </span>
         </span>
     </div>`;
