@@ -213,9 +213,14 @@ declare global {
 
 async function onShareClicked(shareLink: HTMLElement): Promise<void>
 {
+    const todayGameId = formatDate(new Date());
+    const isTodaysPuzzle =  window.game!.gameId == todayGameId;
+
     const time = formatMinutesSeconds(window.game!.getTimeSpentMs(), false);
     const url = window.location.origin + window.location.pathname + "?day=" + window.game!.gameId;
-    const message = `I finished Turntile in ${time}! ${url}`;
+    let message = `I finished Turntiles in ${time}! ${url}`;
+    if (isTodaysPuzzle)
+        message = `I finished today's Turntile in ${time}! ${url}`;
     await navigator.clipboard.writeText(message);
 
     const toast = createElement(`
