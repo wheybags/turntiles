@@ -211,6 +211,26 @@ declare global {
     }
 }
 
+// https://stackoverflow.com/a/9039885
+function isIOS() {
+    return [
+            'iPad Simulator',
+            'iPhone Simulator',
+            'iPod Simulator',
+            'iPad',
+            'iPhone',
+            'iPod'
+        ].includes(navigator.platform)
+        // iPad on iOS 13 detection
+        || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+}
+
+function shouldUseShareMenu()
+{
+    const isAndroid = /(android)/i.test(navigator.userAgent);
+    return (!!navigator.share) && (isAndroid || isIOS());
+}
+
 async function onShareClicked(shareLink: HTMLElement): Promise<void>
 {
     const todayGameId = formatDate(new Date());
@@ -218,39 +238,50 @@ async function onShareClicked(shareLink: HTMLElement): Promise<void>
 
     const time = formatMinutesSeconds(window.game!.getTimeSpentMs(), false);
     const url = window.location.origin + window.location.pathname + "?day=" + window.game!.gameId;
-    let message = `I finished Turntiles in ${time}! ${url}`;
+    let message = `I finished Turntiles in ${time}!`;
     if (isTodaysPuzzle)
-        message = `I finished today's Turntile in ${time}! ${url}`;
-    await navigator.clipboard.writeText(message);
+        message = `I finished today's Turntile in ${time}!`;
 
-    const toast = createElement(`
-        <div
-            style="
-                position: absolute;
-                left: ${shareLink.getBoundingClientRect().left}px;
-                top: ${shareLink.getBoundingClientRect().top}px;
-                z-index: 20;
-                background: white;
-                padding: 3px;
-                border-radius: 5px;
-                color: black;
-                text-align: center;"
-        >
-            COPIED TO<br>CLIPBOARD
-        </div>
-    `);
+    if (shouldUseShareMenu())
+    {
+        navigator.share({
+            title: 'Turntiles',
+            text: message,
+            url: url,
+        });
+    }
+    else {
+        await navigator.clipboard.writeText(message + ' ' + url);
 
-    toast.className = "fadeOut";
+        const toast = createElement(`
+            <div
+                style="
+                    position: absolute;
+                    left: ${shareLink.getBoundingClientRect().left}px;
+                    top: ${shareLink.getBoundingClientRect().top}px;
+                    z-index: 20;
+                    background: white;
+                    padding: 3px;
+                    border-radius: 5px;
+                    color: black;
+                    text-align: center;"
+            >
+                COPIED TO<br>CLIPBOARD
+            </div>
+        `);
 
-    toast.addEventListener('animationend', () => {
-        toast.remove();
-    });
+        toast.className = "fadeOut";
 
-    toast.addEventListener('animationcancel', () => {
-        toast.remove();
-    });
+        toast.addEventListener('animationend', () => {
+            toast.remove();
+        });
 
-    document.body.appendChild(toast);
+        toast.addEventListener('animationcancel', () => {
+            toast.remove();
+        });
+
+        document.body.appendChild(toast);
+    }
 }
 window.onShareClicked = onShareClicked;
 
