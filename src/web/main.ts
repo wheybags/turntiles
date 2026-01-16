@@ -142,14 +142,14 @@ function showPreviousPuzzlesDays(puzzles: Record<string, string>, year: number, 
     days.sort().reverse()
 
     const sb: Array<string> = [];
-    sb.push(`<a class="previous-link" href="#" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">Back</a><br>`);
+    sb.push(`<button class="previous-link" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">Back</button>`);
     for (const key of days)
     {
         const solved = Game.tryLoadGame(key)?.solved || false;
         const emoji: string = solved ? '🟩' : '🟥';
-        sb.push(`<a class="previous-link" href="#" onclick="loadPuzzleDay('${key}')">${emoji} ${key}</a>`)
+        sb.push(`<button class="previous-link" onclick="loadPuzzleDay('${key}')">${emoji} ${key}</button>`)
     }
-    content.innerHTML = sb.join("<br>");
+    content.innerHTML = sb.join("\n");
 }
 window.showPreviousPuzzlesDays = showPreviousPuzzlesDays;
 
@@ -187,14 +187,14 @@ function showPreviousPuzzlesMonths(puzzles: Record<string, string>, year: number
     const monthNames = ["-", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const sb: Array<string> = [];
-    sb.push(`<a class="previous-link" href="#" onclick="showPreviousPuzzlesYears(puzzles)">Back</a><br>`);
+    sb.push(`<button class="previous-link" onclick="showPreviousPuzzlesYears(puzzles); return false;">Back</button>`);
     for (const month of months)
     {
         const monthData: Group = monthsMap.get(month)!;
         const emoji: string = monthData.completed === monthData.total ? '🟩' : (monthData.completed > 0 ? '🟨' : '🟥');
-        sb.push(`<a class="previous-link" href="#" onclick="showPreviousPuzzlesDays(puzzles, ${year}, ${month})">${emoji} ${monthNames[month]}</a>`)
+        sb.push(`<button class="previous-link" onclick="showPreviousPuzzlesDays(puzzles, ${year}, ${month})">${emoji} ${monthNames[month]}</button>`)
     }
-    content.innerHTML = sb.join("<br>");
+    content.innerHTML = sb.join("\n");
 }
 window.showPreviousPuzzlesMonths = showPreviousPuzzlesMonths;
 
@@ -224,9 +224,9 @@ function showPreviousPuzzlesYears(puzzles: Record<string, string>)
     {
         const yearData: Group = yearsMap.get(year)!;
         const emoji: string = yearData.completed === yearData.total ? '🟩' : (yearData.completed > 0 ? '🟨' : '🟥');
-        sb.push(`<a class="previous-link" href="#" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">${emoji} ${year}</a>`)
+        sb.push(`<button class="previous-link" onclick="showPreviousPuzzlesMonths(puzzles, ${year})">${emoji} ${year}</button>`)
     }
-    content.innerHTML = sb.join("<br>");
+    content.innerHTML = sb.join("\n");
 }
 
 let modalBackdrop: HTMLElement | null = null;
