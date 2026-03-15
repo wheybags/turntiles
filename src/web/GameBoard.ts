@@ -70,9 +70,9 @@ export class GameBoard
 
                 const slot: BoardSlot = gameBoard.get(x, y);
                 slot.direction = solutionSlot.direction;
-                slot.pointAt = new Vec2(solutionSlot.pointAt.x, solutionSlot.pointAt.y);
+                slot.pointAt = solutionSlot.pointAt != null ? solutionSlot.pointAt.clone() : null;
                 for (let i = 0; i < solutionSlot.pointedAtByOtherPos.length; i++)
-                    slot.pointedAtByOtherPos.push(new Vec2(solutionSlot.pointedAtByOtherPos[i].x, solutionSlot.pointedAtByOtherPos[i].y));
+                    slot.pointedAtByOtherPos.push(solutionSlot.pointedAtByOtherPos[i].clone());
             }
         }
 

@@ -1,4 +1,4 @@
-import { SolutionBoard} from "../common/SolutionBoard.ts";
+import {SolutionBoard, type SolutionBoardSlot} from "../common/SolutionBoard.ts";
 import path from "path";
 import fs from "fs";
 import {Vec2} from "../common/Vec.ts";
@@ -79,10 +79,10 @@ function hasDuplicatePrefixes(board: SolutionBoard): boolean
                     if (!usedLetters.has(key))
                         usedLetters.set(key, new Set<string>());
 
-                    if (usedLetters.get(key).has(solutionSlot.letter))
+                    if (usedLetters.get(key)!.has(solutionSlot.letter))
                         return true;
 
-                    usedLetters.get(key).add(solutionSlot.letter);
+                    usedLetters.get(key)!.add(solutionSlot.letter);
                 }
             }
         }
@@ -97,7 +97,7 @@ function has4LetterWord(board: SolutionBoard): boolean
     {
         for (let x: number = 0; x < board.w; x++)
         {
-            const boardPos: BoardSlot = board.get(x, y);
+            const boardPos: SolutionBoardSlot = board.get(x, y);
 
             if (boardPos.pointedAtByOtherPos.length !== 0 || boardPos.direction == BlankDirection)
                 continue;
