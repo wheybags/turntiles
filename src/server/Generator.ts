@@ -37,6 +37,9 @@ export async function generateBoard(): Promise<SolutionBoard>
         if (!has4LetterWord(board))
             continue;
 
+        if (!hasAllDirections(board))
+            continue;
+
         break;
     }
 
@@ -105,6 +108,31 @@ function has4LetterWord(board: SolutionBoard): boolean
     }
 
     return false;
+}
+
+function hasAllDirections(board: SolutionBoard): boolean
+{
+    let upCount: number = 0
+    let downCount: number = 0;
+    let leftCount: number = 0;
+    let rightCount: number = 0;
+
+    for (let y: number = 0; y < board.h; y++)
+    {
+        for (let x: number = 0; x < board.w; x++)
+        {
+            switch (board.get(x, y).direction)
+            {
+                case '^': { upCount++; break; }
+                case 'v': { downCount++; break; }
+                case '<': { leftCount++; break; }
+                case '>': { rightCount++; break; }
+                case BlankDirection: { break; }
+            }
+        }
+    }
+
+    return upCount > 0 && downCount > 0 && leftCount > 0 && rightCount > 0;
 }
 
 function trimEmptyFromStart(val: string): string
