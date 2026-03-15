@@ -2,16 +2,20 @@ import {
     assert,
     BlankDirection,
     BlankLetter,
+    dirToVec,
     type MaybeDirection,
     type MaybeLetter, parseMaybeDirection,
     parseMaybeLetter
 } from "./Common.ts";
-import type {Vec2} from "./Vec.ts";
+import {Vec2} from "./Vec.ts";
 
 export interface SolutionBoardSlot
 {
     letter: MaybeLetter;
     direction: MaybeDirection
+
+    pointedAtByOtherPos: Array<Vec2>,
+    pointAt: Vec2 | null,
 }
 
 export class SolutionBoard
@@ -26,7 +30,12 @@ export class SolutionBoard
         this.h = h;
         this.data = [];
         for (let i = 0; i < w*h; i++)
-            this.data.push({letter: BlankLetter, direction: BlankDirection});
+            this.data.push({
+                letter: BlankLetter,
+                direction: BlankDirection,
+                pointedAtByOtherPos: new Array<Vec2>(),
+                pointAt: null,
+            });
     }
 
     public get(x: number, y: number): SolutionBoardSlot;
@@ -40,16 +49,34 @@ export class SolutionBoard
         return this.data[y*this.w + x];
     }
 
-    public set(x: number, y: number, val: SolutionBoardSlot): void;
-    public set(pos: Vec2, val: SolutionBoardSlot): void;
-    public set(arg1: any, arg2: any, arg3?: any): void
+    public recalculatePointingAt(): void
     {
-        const x: number = arg3 === undefined ? (arg1 as Vec2).x : (arg1 as number);
-        const y: number = arg3 === undefined ? (arg1 as Vec2).y : (arg2 as number);
-        const val: SolutionBoardSlot = arg3 === undefined ? (arg2 as SolutionBoardSlot) : (arg3 as SolutionBoardSlot);
+        for (let y: number= 0; y < this.h; y++)
+        {
+            for (let x: number = 0; x < this.w; x++)
+            {
+                this.get(x, y).pointedAtByOtherPos.length = 0;
+                this.get(x, y).pointAt = null;
+            }
+        }
 
-        assert(x >= 0 && x < this.w && y >= 0 && y < this.h);
-        this.data[y*this.w + x] = val;
+        for (let y: number= 0; y < this.h; y++)
+        {
+            for (let x: number = 0; x < this.w; x++)
+            {
+                if (this.get(x, y).letter != BlankLetter)
+                {
+                    const solutionSlot: SolutionBoardSlot = this.get(x, y);
+
+                    let pointAt: Vec2 | null = new Vec2(x, y).plus(dirToVec(solutionSlot.direction));
+                    if (pointAt.x >= 0 && pointAt.x < this.w && pointAt.y >= 0 && pointAt.y < this.h)
+                    {
+                        solutionSlot.pointAt = pointAt;
+                        this.get(pointAt.x, pointAt.y).pointedAtByOtherPos.push(new Vec2(x, y));
+                    }
+                }
+            }
+        }
     }
 
     public serialise(): string
@@ -125,10 +152,13 @@ export class SolutionBoard
             {
                 const letter: MaybeLetter = parseMaybeLetter(gameString[i]);
                 const direction: MaybeDirection = parseMaybeDirection(gameString[i + 1]);
-                solutionBoard.set(x, y, {letter, direction});
+                solutionBoard.get(x, y).letter = letter;
+                solutionBoard.get(x, y).direction = direction;
                 i += 2;
             }
         }
+
+        solutionBoard.recalculatePointingAt();
 
         return solutionBoard;
     }

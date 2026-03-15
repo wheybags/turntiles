@@ -68,23 +68,11 @@ export class GameBoard
             {
                 const solutionSlot: SolutionBoardSlot = solutionBoard.get(x, y);
 
-                let pointAt: Vec2 | null = new Vec2(x, y).plus(dirToVec(solutionSlot.direction));
-                if (!(pointAt.x >= 0 && pointAt.x < gameBoard.w && pointAt.y >= 0 && pointAt.y < gameBoard.h))
-                    pointAt = null;
-
                 const slot: BoardSlot = gameBoard.get(x, y);
                 slot.direction = solutionSlot.direction;
-                slot.pointAt = pointAt;
-            }
-        }
-
-        for (let y: number = 0; y < gameBoard.h; y++)
-        {
-            for (let x: number = 0; x < gameBoard.w; x++)
-            {
-                const boardPos: BoardSlot = gameBoard.get(x, y);
-                if (boardPos.pointAt !== null)
-                    gameBoard.get(boardPos.pointAt).pointedAtByOtherPos.push(new Vec2(x, y));
+                slot.pointAt = new Vec2(solutionSlot.pointAt.x, solutionSlot.pointAt.y);
+                for (let i = 0; i < solutionSlot.pointedAtByOtherPos.length; i++)
+                    slot.pointedAtByOtherPos.push(new Vec2(solutionSlot.pointedAtByOtherPos[i].x, solutionSlot.pointedAtByOtherPos[i].y));
             }
         }
 

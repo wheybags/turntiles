@@ -58,9 +58,8 @@ function getBlankCount(board: SolutionBoard): number
 
 function hasDuplicatePrefixes(board: SolutionBoard): boolean
 {
-    let duplicatePrefix = false;
     const usedLetters: Map<string, Set<String>> = new Map<string, Set<string>>;
-    outer: for (let y: number= 0; y < board.h; y++)
+    for (let y: number= 0; y < board.h; y++)
     {
         for (let x: number = 0; x < board.w; x++)
         {
@@ -68,21 +67,15 @@ function hasDuplicatePrefixes(board: SolutionBoard): boolean
             {
                 const solutionSlot: SolutionBoardSlot = board.get(x, y);
 
-                let pointAt: Vec2 | null = new Vec2(x, y).plus(dirToVec(solutionSlot.direction));
-                if (!(pointAt.x >= 0 && pointAt.x < board.w && pointAt.y >= 0 && pointAt.y < board.h))
-                    pointAt = null;
-
-                if (pointAt != null) {
-                    const key = pointAt.x + "," + pointAt.y;
+                if (solutionSlot.pointAt != null)
+                {
+                    const key = solutionSlot.pointAt.x + "," + solutionSlot.pointAt.y;
 
                     if (!usedLetters.has(key))
                         usedLetters.set(key, new Set<string>());
 
                     if (usedLetters.get(key).has(solutionSlot.letter))
-                    {
-                        duplicatePrefix = true;
-                        break outer;
-                    }
+                        return true;
 
                     usedLetters.get(key).add(solutionSlot.letter);
                 }
@@ -90,7 +83,7 @@ function hasDuplicatePrefixes(board: SolutionBoard): boolean
         }
     }
 
-    return duplicatePrefix;
+    return false;
 }
 
 function trimEmptyFromStart(val: string): string
@@ -113,7 +106,8 @@ async function generateBoardInner(): Promise<SolutionBoard>
     {
         for (let x = 0; x < board.w; x++)
         {
-            board.set(x, y, {letter: BlankLetter, direction: BlankDirection})
+            board.get(x, y).letter = BlankLetter;
+            board.get(x, y).direction = BlankDirection;
         }
     }
 
@@ -186,6 +180,7 @@ async function generateBoardInner(): Promise<SolutionBoard>
         //Console.WriteLine("------------");
     }
 
+    board.recalculatePointingAt();
 
     return board;
 }
@@ -220,7 +215,8 @@ function clearInvalid(start: Vec2, board: SolutionBoard): void
     while (board.get(current).direction != BlankDirection)
     {
         const off: Vec2 = dirToVec(board.get(current).direction);
-        board.set(current, {letter: BlankLetter, direction: BlankDirection});
+        board.get(current).letter = BlankLetter;
+        board.get(current).direction = BlankDirection;
         current = current.plus(off);
     }
 }
@@ -231,7 +227,8 @@ function clear(start: Vec2, clearLen: number, board: SolutionBoard): void
     for (let i = 0; i < clearLen; i++)
     {
         const off: Vec2 = dirToVec(board.get(current).direction);
-        board.set(current, {letter: BlankLetter, direction: BlankDirection});
+        board.get(current).letter = BlankLetter;
+        board.get(current).direction = BlankDirection;
         current = current.plus(off);
     }
 }
@@ -284,7 +281,8 @@ function placeRandomPath(board: SolutionBoard, start: Vec2): number
         const directionChar: Direction = possibleDir[randomInt(possibleDir.length)];
         const next: Vec2 = current.plus(dirToVec(directionChar));
 
-        board.set(current, {letter: BlankLetter, direction: directionChar});
+        board.get(current).letter = BlankLetter;
+        board.get(current).direction = directionChar;
 
         if (next.y >= board.h || next.y < 0 || next.x >= board.w || next.x < 0)
             return 1;
