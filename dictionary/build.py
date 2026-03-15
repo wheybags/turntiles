@@ -15,6 +15,10 @@ def build_freq_map():
             freq_map = freq_data["freq_map"]
             done_books = set(freq_data["done_books"])
 
+    if not os.path.exists("books"):
+        return freq_map
+
+
     file_list = os.listdir("books")
     file_list.sort()
     for file in file_list:

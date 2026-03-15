@@ -5363,7 +5363,6 @@ figured
 dashing
 clasping
 gilt
-toby
 faintest
 trim
 reaction
@@ -7205,7 +7204,6 @@ woven
 wrinkles
 corridors
 ranger
-madman
 merchants
 menacing
 preference
@@ -7618,7 +7616,6 @@ conversations
 inspected
 incredulously
 abashed
-hank
 overhanging
 buzzing
 strides
@@ -7980,7 +7977,6 @@ sings
 yawn
 spine
 chaplain
-merest
 spade
 soda
 mane
@@ -13237,7 +13233,6 @@ offender
 pinto
 trooped
 twined
-avowal
 enraptured
 fearsome
 gamblers
@@ -13347,7 +13342,6 @@ somewheres
 brawny
 chopping
 demonstrate
-howe
 narrower
 pretends
 snuggled
@@ -15927,7 +15921,6 @@ quack
 resistless
 roofed
 roped
-chad
 coverings
 driftwood
 equipage
@@ -18104,7 +18097,6 @@ unfortunates
 unimaginative
 unlocking
 wheezed
-yawl
 annihilate
 bowsprit
 confiscated
@@ -21718,7 +21710,6 @@ belched
 briskness
 brooches
 chants
-clime
 clowns
 communed
 famously
@@ -21887,7 +21878,6 @@ steeples
 torchlight
 upbraided
 usages
-brill
 circumscribed
 cognizance
 craves
@@ -22501,7 +22491,6 @@ wending
 acacias
 collateral
 digression
-dumpy
 flayed
 flinty
 frontage
@@ -23596,7 +23585,6 @@ pickpocket
 pincushion
 poultice
 propelling
-rime
 roughs
 shelled
 unbuckled
