@@ -133,7 +133,7 @@ export class SolutionBoard
         return solutionBoard;
     }
 
-    public printAnsi()
+    public printAnsi(): string
     {
         const sb: Array<string> = [];
 

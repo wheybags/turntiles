@@ -27,21 +27,70 @@ export async function generateBoard(): Promise<SolutionBoard>
     while (true)
     {
         board = await generateBoardInner();
-        let blankCount: number = 0;
-        for (let y: number= 0; y < board.h; y++)
-        {
-            for (let x: number = 0; x < board.w; x++)
-            {
-                if (board.get(x, y).letter == BlankLetter)
-                    blankCount++;
-            }
-        }
 
-        if (blankCount <= 2)
-            break;
+
+        if (getBlankCount(board) > 2)
+            continue;
+
+        if (hasDuplicatePrefixes(board))
+            continue;
+
+        break;
     }
 
     return board;
+}
+
+function getBlankCount(board: SolutionBoard): number
+{
+    let blankCount: number = 0;
+    for (let y: number= 0; y < board.h; y++)
+    {
+        for (let x: number = 0; x < board.w; x++)
+        {
+            if (board.get(x, y).letter == BlankLetter)
+                blankCount++;
+        }
+    }
+
+    return blankCount;
+}
+
+function hasDuplicatePrefixes(board: SolutionBoard): boolean
+{
+    let duplicatePrefix = false;
+    const usedLetters: Map<string, Set<String>> = new Map<string, Set<string>>;
+    outer: for (let y: number= 0; y < board.h; y++)
+    {
+        for (let x: number = 0; x < board.w; x++)
+        {
+            if (board.get(x, y).letter != BlankLetter)
+            {
+                const solutionSlot: SolutionBoardSlot = board.get(x, y);
+
+                let pointAt: Vec2 | null = new Vec2(x, y).plus(dirToVec(solutionSlot.direction));
+                if (!(pointAt.x >= 0 && pointAt.x < board.w && pointAt.y >= 0 && pointAt.y < board.h))
+                    pointAt = null;
+
+                if (pointAt != null) {
+                    const key = pointAt.x + "," + pointAt.y;
+
+                    if (!usedLetters.has(key))
+                        usedLetters.set(key, new Set<string>());
+
+                    if (usedLetters.get(key).has(solutionSlot.letter))
+                    {
+                        duplicatePrefix = true;
+                        break outer;
+                    }
+
+                    usedLetters.get(key).add(solutionSlot.letter);
+                }
+            }
+        }
+    }
+
+    return duplicatePrefix;
 }
 
 function trimEmptyFromStart(val: string): string
