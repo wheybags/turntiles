@@ -28,11 +28,13 @@ export async function generateBoard(): Promise<SolutionBoard>
     {
         board = await generateBoardInner();
 
-
         if (getBlankCount(board) > 2)
             continue;
 
         if (hasDuplicatePrefixes(board))
+            continue;
+
+        if (!has4LetterWord(board))
             continue;
 
         break;
@@ -80,6 +82,25 @@ function hasDuplicatePrefixes(board: SolutionBoard): boolean
                     usedLetters.get(key).add(solutionSlot.letter);
                 }
             }
+        }
+    }
+
+    return false;
+}
+
+function has4LetterWord(board: SolutionBoard): boolean
+{
+    for (let y: number = 0; y < board.h; y++)
+    {
+        for (let x: number = 0; x < board.w; x++)
+        {
+            const boardPos: BoardSlot = board.get(x, y);
+
+            if (boardPos.pointedAtByOtherPos.length !== 0 || boardPos.direction == BlankDirection)
+                continue;
+
+            if (getLen(new Vec2(x, y), board) == 4)
+                return true;
         }
     }
 
