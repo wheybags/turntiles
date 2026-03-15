@@ -843,3 +843,5 @@ merest
 clime
 rime
 dumpy
+sous
+rectus
